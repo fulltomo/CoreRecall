@@ -195,12 +195,12 @@ function renderSettings() {
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
-  $$('#swatches .swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.theme === db.settings.theme));
+  $('#set-theme').value = db.settings.theme;
 }
 function applyTheme() {
   // an imported backup (or an older one, naming the retired "system") can carry a
   // theme this build doesn't have — don't leave --surface undefined
-  if (!$(`[data-theme="${db.settings.theme}"]`)) { db.settings.theme = 'light'; save(); }
+  if (!$(`#set-theme option[value="${db.settings.theme}"]`)) { db.settings.theme = 'light'; save(); }
   document.documentElement.className = `theme-${db.settings.theme}`;
   // keep the iOS status bar / PWA chrome in step with the surface colour
   $('#meta-theme').content = getComputedStyle(document.body).backgroundColor;
@@ -417,8 +417,6 @@ document.addEventListener('click', e => {
   if (t.closest('[data-edit]')) return cardSheet(current);
   const sp = t.closest('[data-speak]'); if (sp) return speak(faces(current)[sp.dataset.speak === 'front' ? 'q' : 'a']);
   const g = t.closest('[data-g]'); if (g) return grade(+g.dataset.g);
-  const th = t.closest('[data-theme]');
-  if (th) { db.settings.theme = th.dataset.theme; save(); applyTheme(); return renderSettings(); }
   if (t.closest('#banner-export') || t.closest('#btn-export')) return exportJSON();
 });
 
@@ -435,6 +433,7 @@ $('#btn-del-deck').onclick = () => {
   save(); closeDeck();
 };
 $('#rv-flip').onclick = e => { if (!e.target.closest('button')) flip(); };  // tools stay clickable
+$('#set-theme').onchange = e => { db.settings.theme = e.target.value; save(); applyTheme(); };
 ['reverse', 'shuffle'].forEach(k => {
   $('#opt-' + k).onchange = e => { deckOf(openDeck)[k] = e.target.checked; save(); renderDeck(); };
 });

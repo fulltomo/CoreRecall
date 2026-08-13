@@ -6,33 +6,28 @@
    single ramp at the bottom of this block, so light and dark are not special
    cases, just themes whose page colour happens to be white or black.
 
-   The class goes on <html> and on the settings swatches, which read --base
-   and --tint from themselves, so a theme's colours are written exactly once.
+   The class goes on <html>, so a theme's colours are written exactly once.
 
    To add a theme: add one line here, add its name to whichever polarity list
-   below matches (that is what flips text from black to white), and add one
-   <button class="swatch theme-x" data-theme="x"> in index.html. Check the
-   contrast: shipped themes clear 7:1 body text, 4.5:1 accent and secondary
-   text, 3:1 dividers.
+   below matches (that is what flips text from black to white), and add an
+   <option> to #set-theme in index.html. Check the contrast: shipped themes
+   clear 7:1 body text, 4.5:1 accent and secondary text, 3:1 dividers.
 
    The Again/Hard/Good/Easy colours and the New/Learn/Due counts live in the
    polarity lists, not in the themes: they are status colours, and tying them
    to the theme makes them collide (a green theme would paint "new" and "due"
    the same). Same reasoning as iOS keeping badge colours off the accent. */
-.theme-light    { --base: #f2f2f7; --tint: #0058bc; --on-tint: #ffffff; }
-.theme-sepia    { --base: #f5ecdb; --tint: #8a5522; --on-tint: #ffffff; }
-.theme-sage     { --base: #e9f2ea; --tint: #2c6144; --on-tint: #ffffff; }
-.theme-sky      { --base: #e6f0f4; --tint: #0d5f6e; --on-tint: #ffffff; }
-.theme-dark     { --base: #000000; --tint: #adc6ff; --on-tint: #002e69; }
-.theme-midnight { --base: #0d1220; --tint: #a8c8ff; --on-tint: #002e69; }
-.theme-forest   { --base: #0a130d; --tint: #9fd6b4; --on-tint: #0a3b23; }
-.theme-plum     { --base: #150d15; --tint: #e2b3de; --on-tint: #3c2140; }
+.theme-light   { --base: #f2f2f7; --tint: #0a66d0; --on-tint: #ffffff; }  /* iOS の淡いグレー */
+.theme-paper   { --base: #f6efe1; --tint: #a1552a; --on-tint: #ffffff; }  /* 紙・セピア */
+.theme-dark    { --base: #000000; --tint: #7fb0ff; --on-tint: #00306b; }  /* OLED 向け真っ黒 */
+.theme-slate   { --base: #262b35; --tint: #88c0d0; --on-tint: #0d2a33; }  /* 青灰 + シアン */
+.theme-forest  { --base: #16241d; --tint: #7fd0a5; --on-tint: #05301f; }  /* 深緑 + ミント */
 /* No fallback here on purpose — <html> ships with theme-light. */
 
 /* Polarity: --ink is the direction everything contrasts toward, --raise is how
    far a raised surface (a card) climbs toward white. Status colours ride along
    because they need a light and a dark variant too. */
-.theme-light, .theme-sepia, .theme-sage, .theme-sky {
+.theme-light, .theme-paper {
   --ink: #000000; --raise: 76%; --scheme: light;
   --shadow: 0 2px 8px rgba(0,0,0,.05);
   --tertiary: #9e3d00; --error: #ba1a1a;
@@ -40,7 +35,7 @@
   --g1: #b4443c; --g2: #98661f; --g3: #1f6fb2; --g4: #5b57c4;
   --new: #0058bc; --learn: #ba1a1a; --due: #1c7a3e;
 }
-.theme-dark, .theme-midnight, .theme-forest, .theme-plum {
+.theme-dark, .theme-slate, .theme-forest {
   --ink: #ffffff; --raise: 11%; --scheme: dark;
   --shadow: none;
   --tertiary: #ffb595; --error: #ffb4ab;
@@ -176,29 +171,6 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch:checked { background: var(--due); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-/* Theme swatches: 44px hit area, 26px dot showing the theme's actual page
-   colour ringed by its accent. Each button carries its own .theme-* class and
-   paints itself from --base / --tint, so no theme colour is written twice. */
-/* label takes its own line so the swatches always get the full row width and
-   never wrap into a ragged second row */
-.swatch-row { flex-wrap: wrap; padding-bottom: 4px; }
-.swatch-row > span:first-of-type { flex: 1 0 100%; }
-.swatches { display: flex; width: 100%; margin: 0 -10px -8px; }
-.swatch { flex: 1 1 0; min-width: 38px; max-width: var(--touch); height: var(--touch);
-  border-radius: 50%; position: relative; }
-.swatch::after {
-  content: ''; position: absolute; inset: 9px; border-radius: 50%;
-  background: var(--base); border: 2.5px solid var(--tint);
-  transition: transform .16s var(--ease);
-}
-.swatch[aria-pressed="true"]::before {
-  content: ''; position: absolute; inset: 3px; border-radius: 50%;
-  border: 2px solid var(--on-surface);
-}
-.swatch:active::after { transform: scale(.86); }
-.swatch:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-.row input:focus, .row select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 .deck-list { list-style: none; display: flex; flex-direction: column; gap: var(--stack); }
 .deck-row {
