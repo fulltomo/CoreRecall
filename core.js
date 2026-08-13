@@ -72,4 +72,13 @@ function parseCSV(text) {
 const HEADERS = ['front', 'back', 'question', 'answer', 'term', 'definition', 'word', 'meaning', '表', '裏', '質問', '答え', '単語', '意味'];
 const isHeader = row => row.slice(0, 2).every(c => HEADERS.includes(c.trim().toLowerCase()));
 
-if (typeof module !== 'undefined') module.exports = { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability };
+if (typeof globalThis !== 'undefined') {
+  Object.assign(globalThis, { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability });
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability };
+}
+export { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability };
+
+
+
