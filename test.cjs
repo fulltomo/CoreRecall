@@ -171,6 +171,78 @@ const assert = require('assert');
     assert.ok(dueVsCard >= 3.0, `[Theme ${t.name}] switch ON state contrast ${dueVsCard.toFixed(2)}:1 must be >= 3.0`);
   });
 
+  // --- store.js database normalization regression tests
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: key => storage.get(key) ?? null,
+    setItem: (key, val) => storage.set(key, String(val)),
+    removeItem: key => storage.delete(key),
+    clear: () => storage.clear()
+  };
+
+  const store = await import('./store.js');
+
+  // setDB with log: null must allow todayLog() to return [] without exception
+  store.setDB({ log: null });
+  assert.doesNotThrow(() => {
+    assert.deepStrictEqual(store.todayLog(), [], 'todayLog() must return [] when log is null');
+  });
+
+  // Invalid decks, cards, log values replaced with empty arrays
+  store.setDB({ decks: null, cards: 'invalid', log: 123 });
+  assert.deepStrictEqual(store.db.decks, [], 'invalid decks must be replaced with []');
+  assert.deepStrictEqual(store.db.cards, [], 'invalid cards must be replaced with []');
+  assert.deepStrictEqual(store.db.log, [], 'invalid log must be replaced with []');
+
+  // settings: null or settings: [] replaced with default settings
+  store.setDB({ settings: null });
+  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: null replaced with defaults');
+  store.setDB({ settings: [] });
+  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: [] replaced with defaults');
+
+  // Invalid elements within decks, cards, and log arrays are filtered out
+  const validDeck = { id: 'd1', name: 'Test' };
+  const validCard = { id: 'c1', deck: 'd1', reps: 0 };
+  const validLog = { t: Date.now(), g: 3, n: 1, c: 'c1' };
+
+  store.setDB({
+    decks: [null, undefined, 123, 'str', true, [1, 2], validDeck],
+    cards: [null, undefined, 456, 'card', false, [3, 4], validCard],
+    log: [null, undefined, 789, 'log', true, [5, 6], validLog]
+  });
+  assert.deepStrictEqual(store.db.decks, [validDeck], 'invalid deck elements filtered out');
+  assert.deepStrictEqual(store.db.cards, [validCard], 'invalid card elements filtered out');
+  assert.deepStrictEqual(store.db.log, [validLog], 'invalid log elements filtered out');
+
+  // Verify functions like todayLog() and counts() don't throw when arrays contained null elements prior to setDB
+  store.setDB({ decks: [null], cards: [null], log: [null] });
+  assert.doesNotThrow(() => store.todayLog());
+  assert.doesNotThrow(() => store.counts('d1'));
+
+  // load() normalizes corrupted persisted data and saves normalized DB to localStorage
+  storage.set(store.KEY, JSON.stringify({ decks: [null, 'corrupted'], cards: null, log: [123], settings: null }));
+  store.load();
+  assert.deepStrictEqual(store.db.decks, []);
+  assert.deepStrictEqual(store.db.cards, []);
+  assert.deepStrictEqual(store.db.log, []);
+  assert.deepStrictEqual(store.db.settings, store.blank().settings);
+  assert.deepStrictEqual(JSON.parse(storage.get(store.KEY)), store.db, 'load() must persist normalized DB to localStorage');
+
+  // Verify normalizeDB with malformed fields (non-array collections, invalid lastBackup, non-record settings)
+  const malformedFields = store.normalizeDB({
+    decks: {},
+    cards: 'cards',
+    log: null,
+    lastBackup: '12345',
+    settings: []
+  });
+  const blankState = store.blank();
+  assert.deepStrictEqual(malformedFields.decks, blankState.decks, 'invalid decks fallback to []');
+  assert.deepStrictEqual(malformedFields.cards, blankState.cards, 'invalid cards fallback to []');
+  assert.deepStrictEqual(malformedFields.log, blankState.log, 'invalid log fallback to []');
+  assert.deepStrictEqual(malformedFields.settings, blankState.settings, 'invalid settings fallback to blank settings');
+  assert.strictEqual(typeof malformedFields.lastBackup, 'number', 'invalid lastBackup falls back to default timestamp');
+
   console.log('all checks passed');
 })().catch(err => {
   console.error(err);
