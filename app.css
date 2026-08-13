@@ -1,31 +1,49 @@
-/* Core Recall — design tokens. Light palette here, dark overrides below it.
-   Change a colour here, not in the rules. The few literals further down are
-   deliberately theme-independent: white on the rating buttons and the switch
-   knob, the modal scrim, shadows, and the toast (always dark, like iOS).
+/* Core Recall — design tokens.
 
-   ACCENT PRESETS: each .accent-* class carries one preset as four values —
-   the primary and its text colour, for light (-l) and dark (-d). Light/dark
-   mode picks which pair becomes --primary below, so a preset never has to
-   know which mode is active. To add one, copy a block and check both pairs
-   reach 4.5:1 (see the ratios listed with each). The class goes on <html>
-   next to theme-*, and on the settings swatches, which read --accent-l/-d
-   from themselves — so a preset's colours are written exactly once. */
+   BASE COLOUR PRESETS: each .base-* class is one theme in five values — the
+   page colour and the accent, for light (-l) and dark (-d), plus the text
+   colour that sits on the dark accent. Everything else (cards, dividers,
+   text, pressed states) is mixed from the page colour below, so a preset
+   never lists more than those five.
+
+   The class goes on <html> next to theme-light / theme-dark, and on the
+   settings swatches, which read --base-l/-d from themselves — so a preset's
+   colours are written exactly once. To add one, copy a line and check the
+   contrast (all shipped presets clear 7:1 body text, 4.5:1 accent and
+   secondary text, 3:1 dividers, in both modes).
+
+   Literals further down are deliberately theme-independent: white on the
+   rating buttons and the switch knob, the modal scrim, shadows, and the
+   toast (always dark, like iOS). The Again/Hard/Good/Easy colours and the
+   New/Learn/Due counts are status colours and stay fixed too — tying them
+   to the theme makes them collide (green base -> "new" and "due" identical). */
+.base-slate  { --base-l: #f2f2f7; --tint-l: #0058bc; --base-d: #000000; --tint-d: #adc6ff; --on-tint-d: #002e69; }
+.base-sepia  { --base-l: #f5ecdb; --tint-l: #8a5522; --base-d: #14100a; --tint-d: #e6bd90; --on-tint-d: #432b00; }
+.base-forest { --base-l: #e9f2ea; --tint-l: #2c6144; --base-d: #0a130d; --tint-d: #9fd6b4; --on-tint-d: #0a3b23; }
+.base-ocean  { --base-l: #e6f0f4; --tint-l: #0d5f6e; --base-d: #081114; --tint-d: #92d6e2; --on-tint-d: #00363f; }
+.base-plum   { --base-l: #f3eaf3; --tint-l: #6d3d6b; --base-d: #130d13; --tint-d: #e2b3de; --on-tint-d: #3c2140; }
+/* No fallback here on purpose — <html> ships with base-slate, so the default
+   lives in one place instead of being repeated. */
+
+/* Light: lift toward white for raised surfaces, sink toward black for the rest. */
 :root {
-  --surface: #f9f9fe;
-  --c-lowest: #ffffff;
-  --c-low: #f3f3f8;
-  --c: #ededf2;
-  --c-high: #e8e8ed;
-  --on-surface: #1a1c1f;
-  --on-variant: #414755;
-  --outline: #717786;
-  --outline-variant: #c1c6d7;
-  --primary: var(--accent-l);
-  --on-primary: var(--accent-on-l);
+  color-scheme: light;
+  --surface:         var(--base-l);
+  --c-lowest:        color-mix(in srgb, #fff 76%, var(--base-l));
+  --c-low:           color-mix(in srgb, #fff 34%, var(--base-l));
+  --c:               color-mix(in srgb, #000  5%, var(--base-l));
+  --c-high:          color-mix(in srgb, #000  9%, var(--base-l));
+  --outline-variant: color-mix(in srgb, #000 20%, var(--base-l));
+  --outline:         color-mix(in srgb, #000 48%, var(--base-l));
+  --on-variant:      color-mix(in srgb, #000 74%, var(--base-l));
+  --on-surface:      color-mix(in srgb, #000 90%, var(--base-l));
+  --primary: var(--tint-l);
+  --on-primary: #ffffff;
   --tertiary: #9e3d00;
   --error: #ba1a1a;
   --error-container: #ffdad6;
   --on-error-container: #93000a;
+  --shadow: 0 2px 8px rgba(0,0,0,.05);
 
   --g1: #b4443c; --g2: #98661f; --g3: #1f6fb2; --g4: #5b57c4;
   --new: #0058bc; --learn: #ba1a1a; --due: #1c7a3e;
@@ -33,46 +51,34 @@
   --r-sm: .25rem; --r: .5rem; --r-md: .75rem; --r-xl: 1.5rem;
   --m-page: 16px; --gutter: 12px; --stack: 8px; --card-pad: 20px; --touch: 44px;
   --tabbar-h: calc(52px + env(safe-area-inset-bottom));
-  --shadow: 0 2px 8px rgba(0,0,0,.05);
   --ease: cubic-bezier(.32,.72,0,1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Hiragino Sans",
           "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
 }
 
-/* Accent presets — declared after :root so they win the specificity tie.
-   Contrast of each pair: light 6.4–9.3:1, dark 7.7:1. */
-.accent-blue     { --accent-l: #0058bc; --accent-on-l: #ffffff; --accent-d: #adc6ff; --accent-on-d: #002e69; }
-.accent-green    { --accent-l: #00693e; --accent-on-l: #ffffff; --accent-d: #6fdba0; --accent-on-d: #003920; }
-.accent-purple   { --accent-l: #6750a4; --accent-on-l: #ffffff; --accent-d: #d0bcff; --accent-on-d: #381e72; }
-.accent-orange   { --accent-l: #a03e00; --accent-on-l: #ffffff; --accent-d: #ffb68f; --accent-on-d: #552100; }
-.accent-graphite { --accent-l: #3f4759; --accent-on-l: #ffffff; --accent-d: #c3c7d4; --accent-on-d: #2a3140; }
-/* No :root fallback on purpose — <html> ships with accent-blue, so the default
-   lives in one place instead of being repeated here. */
-
-@media (prefers-color-scheme: dark) {
-  html.theme-system {
-    --surface: #000000;
-    --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
-    --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-    --primary: var(--accent-d); --on-primary: var(--accent-on-d);
-    --tertiary: #ffb595; --error: #ffb4ab;
-    --error-container: #4d0006; --on-error-container: #ffdad6;
-    --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
-    --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
-    --shadow: none;
-    color-scheme: dark;
-  }
-}
+/* Dark: everything lifts toward white off the page colour. applyTheme() resolves
+   "iOS 標準" to this class, so there is no second copy behind a media query. */
 html.theme-dark {
-  --surface: #000000;
-  --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
-  --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-  --primary: var(--accent-d); --on-primary: var(--accent-on-d);
-  --tertiary: #ffb595; --error: #ffb4ab;
-  --error-container: #4d0006; --on-error-container: #ffdad6;
+  color-scheme: dark;
+  --surface:         var(--base-d);
+  --c-lowest:        color-mix(in srgb, #fff 11%, var(--base-d));
+  --c-low:           color-mix(in srgb, #fff  5%, var(--base-d));
+  --c:               color-mix(in srgb, #fff 11%, var(--base-d));
+  --c-high:          color-mix(in srgb, #fff 17%, var(--base-d));
+  --outline-variant: color-mix(in srgb, #fff 21%, var(--base-d));
+  --outline:         color-mix(in srgb, #fff 50%, var(--base-d));
+  --on-variant:      color-mix(in srgb, #fff 64%, var(--base-d));
+  --on-surface:      color-mix(in srgb, #fff 93%, var(--base-d));
+  --primary: var(--tint-d);
+  --on-primary: var(--on-tint-d);
+  --tertiary: #ffb595;
+  --error: #ffb4ab;
+  --error-container: #4d0006;
+  --on-error-container: #ffdad6;
+  --shadow: none;
+
   --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
   --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
-  --shadow: none;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -180,25 +186,26 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Accent swatches: 44px hit area, 26px dot. Each button carries its own
-   .accent-* class, so it paints itself from --accent-l/-d — no colour repeated. */
+/* Base swatches: 44px hit area, 26px dot showing the page colour ringed by its
+   accent. Each button carries its own .base-* class and paints itself from
+   --base-l/-d, so no preset colour is written twice. */
+/* label keeps its width; the swatches drop to their own line if they can't fit */
+.swatch-row { flex-wrap: wrap; }
+.swatch-row > span:first-of-type { flex: 0 0 auto; white-space: nowrap; }
 .swatches { display: flex; flex-wrap: wrap; margin: -10px -10px -10px auto; }
 .swatch { width: var(--touch); height: var(--touch); border-radius: 50%; position: relative; }
 .swatch::after {
   content: ''; position: absolute; inset: 9px; border-radius: 50%;
-  background: var(--accent-l); border: .5px solid rgba(0,0,0,.18);
+  background: var(--base-l); border: 2.5px solid var(--tint-l);
   transition: transform .16s var(--ease);
 }
 .swatch[aria-pressed="true"]::before {
-  content: ''; position: absolute; inset: 4px; border-radius: 50%;
+  content: ''; position: absolute; inset: 3px; border-radius: 50%;
   border: 2px solid var(--on-surface);
 }
 .swatch:active::after { transform: scale(.86); }
 .swatch:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-html.theme-dark .swatch::after { background: var(--accent-d); border-color: rgba(255,255,255,.18); }
-@media (prefers-color-scheme: dark) {
-  html.theme-system .swatch::after { background: var(--accent-d); border-color: rgba(255,255,255,.18); }
-}
+html.theme-dark .swatch::after { background: var(--base-d); border-color: var(--tint-d); }
 .row input:focus, .row select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 .deck-list { list-style: none; display: flex; flex-direction: column; gap: var(--stack); }

@@ -19,7 +19,7 @@ let db, view = 'home', openDeck = null;
 function blank() {
   // lastBackup starts "now" so a fresh install isn't nagged on day one
   return { decks: [], cards: [], log: [], lastBackup: Date.now(),
-    settings: { new: 20, max: 200, ret: 90, theme: 'system', accent: 'blue' } };
+    settings: { new: 20, max: 200, ret: 90, theme: 'system', base: 'slate' } };
 }
 function load() {
   try { db = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { db = seed(); }
@@ -196,12 +196,16 @@ function renderSettings() {
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
-  $$('#swatches .swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.accent === db.settings.accent));
+  $$('#swatches .swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.base === db.settings.base));
 }
 function applyTheme() {
-  // an imported backup can name a preset this build doesn't have — don't leave --primary undefined
-  if (!$(`[data-accent="${db.settings.accent}"]`)) db.settings.accent = 'blue';
-  document.documentElement.className = `theme-${db.settings.theme} accent-${db.settings.accent}`;
+  // an imported backup can name a preset this build doesn't have — don't leave --surface undefined
+  if (!$(`[data-base="${db.settings.base}"]`)) db.settings.base = 'slate';
+  // resolve "iOS 標準" here so the CSS needs one dark block instead of one per selector
+  const mode = db.settings.theme === 'system'
+    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : db.settings.theme;
+  document.documentElement.className = `theme-${mode} base-${db.settings.base}`;
   // keep the iOS status bar / PWA chrome in step with the surface colour
   $('#meta-theme').content = getComputedStyle(document.body).backgroundColor;
 }
@@ -417,8 +421,8 @@ document.addEventListener('click', e => {
   if (t.closest('[data-edit]')) return cardSheet(current);
   const sp = t.closest('[data-speak]'); if (sp) return speak(faces(current)[sp.dataset.speak === 'front' ? 'q' : 'a']);
   const g = t.closest('[data-g]'); if (g) return grade(+g.dataset.g);
-  const ac = t.closest('[data-accent]');
-  if (ac) { db.settings.accent = ac.dataset.accent; save(); applyTheme(); return renderSettings(); }
+  const b = t.closest('[data-base]');
+  if (b) { db.settings.base = b.dataset.base; save(); applyTheme(); return renderSettings(); }
   if (t.closest('#banner-export') || t.closest('#btn-export')) return exportJSON();
 });
 
