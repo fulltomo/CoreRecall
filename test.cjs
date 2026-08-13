@@ -148,6 +148,44 @@ const assert = require('assert');
     assert.ok(dueVsCard >= 3.0, `[Theme ${t.name}] switch ON state contrast ${dueVsCard.toFixed(2)}:1 must be >= 3.0`);
   });
 
+  // --- store.js database normalization regression tests
+  const storage = new Map();
+  globalThis.localStorage = {
+    getItem: key => storage.get(key) ?? null,
+    setItem: (key, val) => storage.set(key, String(val)),
+    removeItem: key => storage.delete(key),
+    clear: () => storage.clear()
+  };
+
+  const store = await import('./store.js');
+
+  // setDB with log: null must allow todayLog() to return [] without exception
+  store.setDB({ log: null });
+  assert.doesNotThrow(() => {
+    assert.deepStrictEqual(store.todayLog(), [], 'todayLog() must return [] when log is null');
+  });
+
+  // Invalid decks, cards, log values replaced with empty arrays
+  store.setDB({ decks: null, cards: 'invalid', log: 123 });
+  assert.deepStrictEqual(store.db.decks, [], 'invalid decks must be replaced with []');
+  assert.deepStrictEqual(store.db.cards, [], 'invalid cards must be replaced with []');
+  assert.deepStrictEqual(store.db.log, [], 'invalid log must be replaced with []');
+
+  // settings: null or settings: [] replaced with default settings
+  store.setDB({ settings: null });
+  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: null replaced with defaults');
+  store.setDB({ settings: [] });
+  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: [] replaced with defaults');
+
+  // load() normalizes corrupted persisted data and saves normalized DB to localStorage
+  storage.set(store.KEY, JSON.stringify({ decks: 'corrupted', cards: null, log: {}, settings: null }));
+  store.load();
+  assert.deepStrictEqual(store.db.decks, []);
+  assert.deepStrictEqual(store.db.cards, []);
+  assert.deepStrictEqual(store.db.log, []);
+  assert.deepStrictEqual(store.db.settings, store.blank().settings);
+  assert.deepStrictEqual(JSON.parse(storage.get(store.KEY)), store.db, 'load() must persist normalized DB to localStorage');
+
   console.log('all checks passed');
 })().catch(err => {
   console.error(err);

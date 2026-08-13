@@ -1,4 +1,4 @@
-import { DAY, schedule } from './core.js';
+import { schedule } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
@@ -6,8 +6,23 @@ const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getM
 export const KEY = 'core-recall-v1';
 export let db = null;
 
+export function normalizeDB(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return blank();
+  }
+  const b = blank();
+  const decks = Array.isArray(value.decks) ? value.decks : b.decks;
+  const cards = Array.isArray(value.cards) ? value.cards : b.cards;
+  const log = Array.isArray(value.log) ? value.log : b.log;
+  const settings = (!value.settings || typeof value.settings !== 'object' || Array.isArray(value.settings))
+    ? b.settings
+    : Object.assign(b.settings, value.settings);
+  const lastBackup = typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup;
+  return { ...value, decks, cards, log, settings, lastBackup };
+}
+
 export function setDB(newDB) {
-  db = newDB;
+  db = normalizeDB(newDB);
 }
 
 export function blank() {
@@ -16,8 +31,7 @@ export function blank() {
 }
 
 export function load() {
-  try { db = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { db = seed(); }
-  db.settings = Object.assign(blank().settings, db.settings);
+  try { setDB(JSON.parse(localStorage.getItem(KEY)) || seed()); } catch { setDB(seed()); }
   save();
 }
 
