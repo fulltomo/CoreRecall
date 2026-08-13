@@ -59,6 +59,22 @@ const assert = require('assert');
     'but not when it is the only row — that is real data');
 
   // --- contrast ratio checks for form controls and switch track (WCAG 1.4.11 >= 3:1)
+  const fs = require('fs');
+  const cssContent = fs.readFileSync('./app.css', 'utf8');
+
+  // Verify .switch ruleset in app.css includes a border using var(--outline)
+  const switchMatch = cssContent.match(/\.switch\s*\{([^}]+)\}/);
+  assert.ok(switchMatch, '.switch CSS rule must exist in app.css');
+  assert.ok(
+    /border\s*:\s*[^;]*var\(--outline\)/.test(switchMatch[1]),
+    '.switch in app.css must declare a border using var(--outline)'
+  );
+
+  // Extract --outline mix percentage from app.css
+  const outlineMixMatch = cssContent.match(/--outline\s*:\s*color-mix\([^)]*var\(--ink\)\s*(\d+)%/);
+  assert.ok(outlineMixMatch, '--outline color-mix definition must exist in app.css');
+  const outlinePct = parseInt(outlineMixMatch[1], 10);
+
   function parseHexColor(hex) {
     hex = hex.replace('#', '');
     if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
@@ -88,20 +104,45 @@ const assert = require('assert');
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   }
 
-  const whiteRGB = [255, 255, 255], blackRGB = [0, 0, 0];
-  const themeConfigs = [
-    { name: 'light', base: parseHexColor('#f2f2f7'), ink: blackRGB, raise: 76, due: parseHexColor('#1c7a3e') },
-    { name: 'paper', base: parseHexColor('#f6efe1'), ink: blackRGB, raise: 76, due: parseHexColor('#1c7a3e') },
-    { name: 'dark', base: parseHexColor('#000000'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') },
-    { name: 'slate', base: parseHexColor('#262b35'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') },
-    { name: 'forest', base: parseHexColor('#16241d'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') }
-  ];
+  // Extract theme base colors from .theme-<name> selectors in app.css
+  const themeNames = ['light', 'paper', 'dark', 'slate', 'forest'];
+  const parsedThemes = themeNames.map(name => {
+    const themeMatch = cssContent.match(new RegExp(`\\.theme-${name}\\s*\\{([^}]+)\\}`));
+    assert.ok(themeMatch, `.theme-${name} definition must exist in app.css`);
+    const baseHexMatch = themeMatch[1].match(/--base\s*:\s*(#[0-9a-fA-F]{3,6})/);
+    assert.ok(baseHexMatch, `--base color must be defined in .theme-${name}`);
+    return { name, baseHex: baseHexMatch[1] };
+  });
 
-  themeConfigs.forEach(t => {
-    const cLowest = mixColors(whiteRGB, t.base, t.raise);
-    const outline = mixColors(t.ink, t.base, 48);
+  // Extract polarity settings (--ink, --raise, --due) from app.css
+  const extractPolarity = (pattern) => {
+    const match = cssContent.match(pattern);
+    assert.ok(match, 'Polarity theme section missing in app.css');
+    const block = match[1];
+    const inkHex = block.match(/--ink\s*:\s*(#[0-9a-fA-F]{3,6})/)[1];
+    const raisePct = parseInt(block.match(/--raise\s*:\s*(\d+)%/)[1], 10);
+    const dueHex = block.match(/--due\s*:\s*(#[0-9a-fA-F]{3,6})/)[1];
+    return { inkHex, raisePct, dueHex };
+  };
+
+  const lightPolarity = extractPolarity(/\.theme-light\s*,\s*\.theme-paper\s*\{([\s\S]*?)\}/);
+  const darkPolarity = extractPolarity(/\.theme-dark\s*,\s*\.theme-slate\s*,\s*\.theme-forest\s*\{([\s\S]*?)\}/);
+
+  const whiteRGB = [255, 255, 255];
+
+  parsedThemes.forEach(t => {
+    const isDarkGroup = ['dark', 'slate', 'forest'].includes(t.name);
+    const polarity = isDarkGroup ? darkPolarity : lightPolarity;
+
+    const base = parseHexColor(t.baseHex);
+    const ink = parseHexColor(polarity.inkHex);
+    const due = parseHexColor(polarity.dueHex);
+    const raise = polarity.raisePct;
+
+    const cLowest = mixColors(whiteRGB, base, raise);
+    const outline = mixColors(ink, base, outlinePct);
     const borderVsCard = getContrastRatio(outline, cLowest);
-    const dueVsCard = getContrastRatio(t.due, cLowest);
+    const dueVsCard = getContrastRatio(due, cLowest);
 
     assert.ok(borderVsCard >= 3.0, `[Theme ${t.name}] switch border contrast ${borderVsCard.toFixed(2)}:1 must be >= 3.0`);
     assert.ok(dueVsCard >= 3.0, `[Theme ${t.name}] switch ON state contrast ${dueVsCard.toFixed(2)}:1 must be >= 3.0`);
