@@ -198,9 +198,12 @@ function renderSettings() {
   $('#set-theme').value = db.settings.theme;
 }
 function applyTheme() {
-  // an imported backup (or an older one, naming the retired "system") can carry a
-  // theme this build doesn't have — don't leave --surface undefined
-  if (!$(`#set-theme option[value="${db.settings.theme}"]`)) { db.settings.theme = 'light'; save(); }
+  // An imported backup (or an older one, naming the retired "system") can carry a
+  // theme this build doesn't have — don't leave --surface undefined. Compare the
+  // option values directly: the saved name is untrusted, and interpolating it into
+  // a selector throws on a quote, after save() has already persisted it.
+  const known = [...$('#set-theme').options].some(o => o.value === db.settings.theme);
+  if (!known) { db.settings.theme = 'light'; save(); }
   document.documentElement.className = `theme-${db.settings.theme}`;
   // keep the iOS status bar / PWA chrome in step with the surface colour
   $('#meta-theme').content = getComputedStyle(document.body).backgroundColor;
