@@ -1,4 +1,7 @@
-/* Core Recall — tokens from DESIGN.md */
+/* Core Recall — design tokens. Light palette here, dark overrides below it.
+   Change a colour here, not in the rules. The few literals further down are
+   deliberately theme-independent: white on the rating buttons and the switch
+   knob, the modal scrim, shadows, and the toast (always dark, like iOS). */
 :root {
   --surface: #f9f9fe;
   --c-lowest: #ffffff;
