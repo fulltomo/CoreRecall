@@ -1,4 +1,4 @@
-import { schedule } from './core.js';
+import { DAY, schedule } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
@@ -6,21 +6,24 @@ const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getM
 export const KEY = 'core-recall-v1';
 export let db = null;
 
-const isRecord = v => Boolean(v && typeof v === 'object' && !Array.isArray(v));
-
 export function normalizeDB(value) {
-  if (!isRecord(value)) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return blank();
   }
   const b = blank();
+  const isRecord = x => x && typeof x === 'object' && !Array.isArray(x);
+
   const decks = Array.isArray(value.decks) ? value.decks.filter(isRecord) : b.decks;
   const cards = Array.isArray(value.cards) ? value.cards.filter(isRecord) : b.cards;
   const log = Array.isArray(value.log) ? value.log.filter(isRecord) : b.log;
-  const settings = (!value.settings || !isRecord(value.settings))
-    ? b.settings
-    : Object.assign(b.settings, value.settings);
-  const lastBackup = typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup;
-  return { ...value, decks, cards, log, settings, lastBackup };
+
+  return {
+    decks,
+    cards,
+    log,
+    lastBackup: typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup,
+    settings: Object.assign(b.settings, isRecord(value.settings) ? value.settings : {})
+  };
 }
 
 export function setDB(newDB) {
@@ -33,7 +36,9 @@ export function blank() {
 }
 
 export function load() {
-  try { setDB(JSON.parse(localStorage.getItem(KEY)) || seed()); } catch { setDB(seed()); }
+  let loaded;
+  try { loaded = JSON.parse(localStorage.getItem(KEY)); } catch {}
+  db = normalizeDB(loaded || seed());
   save();
 }
 

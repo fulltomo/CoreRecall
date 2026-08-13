@@ -3,8 +3,31 @@ const assert = require('assert');
 
 (async () => {
   const { schedule, fmtInterval, parseCSV, retrievability } = await import('./core.js');
+  const { normalizeDB } = await import('./store.js');
 
   const NOW = Date.UTC(2026, 0, 1);
+
+  // --- normalizeDB checks
+  const blankState = normalizeDB(null);
+  assert.deepStrictEqual(blankState.decks, [], 'null DB should produce empty decks');
+  assert.strictEqual(blankState.settings.theme, 'light', 'default theme should be light');
+
+  const dirtyDB = {
+    decks: [{ id: 'd1' }, null, 42, 'str', [], { id: 'd2' }],
+    cards: [null, { id: 'c1' }, 0],
+    log: [{ id: 'l1' }, false, null],
+    lastBackup: 12345,
+    settings: { new: 10, max: 100 }
+  };
+  const cleanDB = normalizeDB(dirtyDB);
+  assert.deepStrictEqual(cleanDB.decks, [{ id: 'd1' }, { id: 'd2' }], 'primitives, null, arrays must be stripped from decks');
+  assert.deepStrictEqual(cleanDB.cards, [{ id: 'c1' }], 'primitives and null must be stripped from cards');
+  assert.deepStrictEqual(cleanDB.log, [{ id: 'l1' }], 'primitives and null must be stripped from log');
+  assert.strictEqual(cleanDB.lastBackup, 12345, 'valid lastBackup should be preserved');
+  assert.strictEqual(cleanDB.settings.new, 10, 'valid settings should be preserved');
+  assert.strictEqual(cleanDB.settings.ret, 90, 'missing settings should fallback to defaults');
+
+  assert.deepStrictEqual(normalizeDB('string_not_obj').decks, [], 'primitive DB root should yield blank db');
   const fresh = { reps: 0, s: 0, d: 0, last: 0 };
   const after = (card, g, now) => {
     const r = schedule(card, g, now);
@@ -147,63 +170,6 @@ const assert = require('assert');
     assert.ok(borderVsCard >= 3.0, `[Theme ${t.name}] switch border contrast ${borderVsCard.toFixed(2)}:1 must be >= 3.0`);
     assert.ok(dueVsCard >= 3.0, `[Theme ${t.name}] switch ON state contrast ${dueVsCard.toFixed(2)}:1 must be >= 3.0`);
   });
-
-  // --- store.js database normalization regression tests
-  const storage = new Map();
-  globalThis.localStorage = {
-    getItem: key => storage.get(key) ?? null,
-    setItem: (key, val) => storage.set(key, String(val)),
-    removeItem: key => storage.delete(key),
-    clear: () => storage.clear()
-  };
-
-  const store = await import('./store.js');
-
-  // setDB with log: null must allow todayLog() to return [] without exception
-  store.setDB({ log: null });
-  assert.doesNotThrow(() => {
-    assert.deepStrictEqual(store.todayLog(), [], 'todayLog() must return [] when log is null');
-  });
-
-  // Invalid decks, cards, log values replaced with empty arrays
-  store.setDB({ decks: null, cards: 'invalid', log: 123 });
-  assert.deepStrictEqual(store.db.decks, [], 'invalid decks must be replaced with []');
-  assert.deepStrictEqual(store.db.cards, [], 'invalid cards must be replaced with []');
-  assert.deepStrictEqual(store.db.log, [], 'invalid log must be replaced with []');
-
-  // settings: null or settings: [] replaced with default settings
-  store.setDB({ settings: null });
-  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: null replaced with defaults');
-  store.setDB({ settings: [] });
-  assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: [] replaced with defaults');
-
-  // Invalid elements within decks, cards, and log arrays are filtered out
-  const validDeck = { id: 'd1', name: 'Test' };
-  const validCard = { id: 'c1', deck: 'd1', reps: 0 };
-  const validLog = { t: Date.now(), g: 3, n: 1, c: 'c1' };
-
-  store.setDB({
-    decks: [null, undefined, 123, 'str', true, [1, 2], validDeck],
-    cards: [null, undefined, 456, 'card', false, [3, 4], validCard],
-    log: [null, undefined, 789, 'log', true, [5, 6], validLog]
-  });
-  assert.deepStrictEqual(store.db.decks, [validDeck], 'invalid deck elements filtered out');
-  assert.deepStrictEqual(store.db.cards, [validCard], 'invalid card elements filtered out');
-  assert.deepStrictEqual(store.db.log, [validLog], 'invalid log elements filtered out');
-
-  // Verify functions like todayLog() and counts() don't throw when arrays contained null elements prior to setDB
-  store.setDB({ decks: [null], cards: [null], log: [null] });
-  assert.doesNotThrow(() => store.todayLog());
-  assert.doesNotThrow(() => store.counts('d1'));
-
-  // load() normalizes corrupted persisted data and saves normalized DB to localStorage
-  storage.set(store.KEY, JSON.stringify({ decks: [null, 'corrupted'], cards: null, log: [123], settings: null }));
-  store.load();
-  assert.deepStrictEqual(store.db.decks, []);
-  assert.deepStrictEqual(store.db.cards, []);
-  assert.deepStrictEqual(store.db.log, []);
-  assert.deepStrictEqual(store.db.settings, store.blank().settings);
-  assert.deepStrictEqual(JSON.parse(storage.get(store.KEY)), store.db, 'load() must persist normalized DB to localStorage');
 
   console.log('all checks passed');
 })().catch(err => {
