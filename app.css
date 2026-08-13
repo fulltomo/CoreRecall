@@ -153,8 +153,11 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -.02em; }
 .row .chev { width: 18px; height: 18px; color: var(--outline); stroke-width: 2.4; margin-left: auto; }
 button.row:active, .deck-row:active { background: var(--c); }
 .row.static { cursor: default; }
+/* form controls use --outline, not the hairline: their fill is within 1.05–1.22:1
+   of the surface behind them, so the border is what identifies the control and
+   WCAG 1.4.11 applies to it (3.18–4.53:1 across the themes) */
 .row input[type=number], .row select {
-  background: var(--c-low); border: .5px solid var(--outline-variant); border-radius: var(--r);
+  background: var(--c-low); border: .5px solid var(--outline); border-radius: var(--r);
   padding: 7px 10px; min-width: 84px; text-align: right; font-variant-numeric: tabular-nums;
 }
 .row select { text-align: left; padding-right: 6px; }
@@ -343,8 +346,8 @@ button.row:active, .deck-row:active { background: var(--c); }
 .sheet-body { padding: 8px var(--m-page) 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 12px; color: var(--on-variant); padding-left: 4px; }
-.field input, .field textarea, .field select {
-  background: var(--c-lowest); border: .5px solid var(--outline-variant); border-radius: var(--r-md);
+.field input, .field textarea, .field select {   /* see .row input — same reason */
+  background: var(--c-lowest); border: .5px solid var(--outline); border-radius: var(--r-md);
   padding: 12px 14px; font-size: 17px; min-height: var(--touch); resize: vertical;
 }
 .field textarea { min-height: 88px; line-height: 22px; }
