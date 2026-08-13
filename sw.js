@@ -1,6 +1,6 @@
 /* Cache-first shell so the app works fully offline. Bump CACHE to ship an update. */
-const CACHE = 'core-recall-v9';
-const SHELL = ['./', 'index.html', 'app.css', 'core.js', 'app.js',
+const CACHE = 'core-recall-v10';
+const SHELL = ['./', 'index.html', 'app.css', 'core.js', 'store.js', 'app.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {

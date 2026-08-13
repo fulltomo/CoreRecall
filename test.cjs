@@ -3,8 +3,46 @@ const assert = require('assert');
 
 (async () => {
   const { schedule, fmtInterval, parseCSV, retrievability } = await import('./core.js');
+  const { normalizeDB } = await import('./store.js');
 
   const NOW = Date.UTC(2026, 0, 1);
+
+  // --- normalizeDB checks
+  const blankState = normalizeDB(null);
+  assert.deepStrictEqual(blankState.decks, [], 'null DB should produce empty decks');
+  assert.strictEqual(blankState.settings.theme, 'light', 'default theme should be light');
+
+  const dirtyDB = {
+    decks: [{ id: 'd1' }, null, 42, 'str', [], { id: 'd2' }],
+    cards: [null, { id: 'c1' }, 0],
+    log: [{ id: 'l1' }, false, null],
+    lastBackup: 12345,
+    settings: { new: 10, max: 100 }
+  };
+  const cleanDB = normalizeDB(dirtyDB);
+  assert.deepStrictEqual(cleanDB.decks, [{ id: 'd1' }, { id: 'd2' }], 'primitives, null, arrays must be stripped from decks');
+  assert.deepStrictEqual(cleanDB.cards, [{ id: 'c1' }], 'primitives and null must be stripped from cards');
+  assert.deepStrictEqual(cleanDB.log, [{ id: 'l1' }], 'primitives and null must be stripped from log');
+  assert.strictEqual(cleanDB.lastBackup, 12345, 'valid lastBackup should be preserved');
+  assert.strictEqual(cleanDB.settings.new, 10, 'valid settings should be preserved');
+  assert.strictEqual(cleanDB.settings.ret, 90, 'missing settings should fallback to defaults');
+
+  const completelyMalformedDB = {
+    decks: "not_an_array",
+    cards: { id: 1 }, // object instead of array
+    log: null,
+    lastBackup: "not_a_number",
+    settings: "not_an_object"
+  };
+  const recoveredDB = normalizeDB(completelyMalformedDB);
+  assert.deepStrictEqual(recoveredDB.decks, [], 'malformed decks collection should fallback to empty array');
+  assert.deepStrictEqual(recoveredDB.cards, [], 'malformed cards collection should fallback to empty array');
+  assert.deepStrictEqual(recoveredDB.log, [], 'malformed log collection should fallback to empty array');
+  assert.ok(typeof recoveredDB.lastBackup === 'number', 'invalid lastBackup should fallback to a number');
+  assert.strictEqual(recoveredDB.settings.theme, 'light', 'invalid settings should fallback to defaults');
+  assert.strictEqual(recoveredDB.settings.new, 20, 'invalid settings should fallback to default values');
+
+  assert.deepStrictEqual(normalizeDB('string_not_obj').decks, [], 'primitive DB root should yield blank db');
   const fresh = { reps: 0, s: 0, d: 0, last: 0 };
   const after = (card, g, now) => {
     const r = schedule(card, g, now);
