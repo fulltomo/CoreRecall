@@ -1,4 +1,4 @@
-import { DAY, schedule } from './core.js';
+import { schedule } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };

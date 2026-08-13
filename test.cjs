@@ -236,11 +236,11 @@ const assert = require('assert');
     lastBackup: '12345',
     settings: []
   });
-  const blankState = store.blank();
-  assert.deepStrictEqual(malformedFields.decks, blankState.decks, 'invalid decks fallback to []');
-  assert.deepStrictEqual(malformedFields.cards, blankState.cards, 'invalid cards fallback to []');
-  assert.deepStrictEqual(malformedFields.log, blankState.log, 'invalid log fallback to []');
-  assert.deepStrictEqual(malformedFields.settings, blankState.settings, 'invalid settings fallback to blank settings');
+  const expectedBlank = store.blank();
+  assert.deepStrictEqual(malformedFields.decks, expectedBlank.decks, 'invalid decks fallback to []');
+  assert.deepStrictEqual(malformedFields.cards, expectedBlank.cards, 'invalid cards fallback to []');
+  assert.deepStrictEqual(malformedFields.log, expectedBlank.log, 'invalid log fallback to []');
+  assert.deepStrictEqual(malformedFields.settings, expectedBlank.settings, 'invalid settings fallback to blank settings');
   assert.strictEqual(typeof malformedFields.lastBackup, 'number', 'invalid lastBackup falls back to default timestamp');
 
   console.log('all checks passed');
