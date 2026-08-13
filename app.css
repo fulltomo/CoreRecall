@@ -164,6 +164,7 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch {
   appearance: none; -webkit-appearance: none; flex: none; position: relative;
   width: 51px; height: 31px; border-radius: 999px; background: var(--c-high);
+  border: .5px solid var(--outline);
   transition: background .25s var(--ease);
 }
 .switch::after {
