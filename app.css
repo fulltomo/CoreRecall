@@ -1,7 +1,15 @@
 /* Core Recall — design tokens. Light palette here, dark overrides below it.
    Change a colour here, not in the rules. The few literals further down are
    deliberately theme-independent: white on the rating buttons and the switch
-   knob, the modal scrim, shadows, and the toast (always dark, like iOS). */
+   knob, the modal scrim, shadows, and the toast (always dark, like iOS).
+
+   ACCENT PRESETS: each .accent-* class carries one preset as four values —
+   the primary and its text colour, for light (-l) and dark (-d). Light/dark
+   mode picks which pair becomes --primary below, so a preset never has to
+   know which mode is active. To add one, copy a block and check both pairs
+   reach 4.5:1 (see the ratios listed with each). The class goes on <html>
+   next to theme-*, and on the settings swatches, which read --accent-l/-d
+   from themselves — so a preset's colours are written exactly once. */
 :root {
   --surface: #f9f9fe;
   --c-lowest: #ffffff;
@@ -12,8 +20,8 @@
   --on-variant: #414755;
   --outline: #717786;
   --outline-variant: #c1c6d7;
-  --primary: #0058bc;
-  --on-primary: #ffffff;
+  --primary: var(--accent-l);
+  --on-primary: var(--accent-on-l);
   --tertiary: #9e3d00;
   --error: #ba1a1a;
   --error-container: #ffdad6;
@@ -30,12 +38,23 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Hiragino Sans",
           "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
 }
+
+/* Accent presets — declared after :root so they win the specificity tie.
+   Contrast of each pair: light 6.4–9.3:1, dark 7.7:1. */
+.accent-blue     { --accent-l: #0058bc; --accent-on-l: #ffffff; --accent-d: #adc6ff; --accent-on-d: #002e69; }
+.accent-green    { --accent-l: #00693e; --accent-on-l: #ffffff; --accent-d: #6fdba0; --accent-on-d: #003920; }
+.accent-purple   { --accent-l: #6750a4; --accent-on-l: #ffffff; --accent-d: #d0bcff; --accent-on-d: #381e72; }
+.accent-orange   { --accent-l: #a03e00; --accent-on-l: #ffffff; --accent-d: #ffb68f; --accent-on-d: #552100; }
+.accent-graphite { --accent-l: #3f4759; --accent-on-l: #ffffff; --accent-d: #c3c7d4; --accent-on-d: #2a3140; }
+/* No :root fallback on purpose — <html> ships with accent-blue, so the default
+   lives in one place instead of being repeated here. */
+
 @media (prefers-color-scheme: dark) {
   html.theme-system {
     --surface: #000000;
     --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
     --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-    --primary: #adc6ff; --on-primary: #002e69;
+    --primary: var(--accent-d); --on-primary: var(--accent-on-d);
     --tertiary: #ffb595; --error: #ffb4ab;
     --error-container: #4d0006; --on-error-container: #ffdad6;
     --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
@@ -48,7 +67,7 @@ html.theme-dark {
   --surface: #000000;
   --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
   --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-  --primary: #adc6ff; --on-primary: #002e69;
+  --primary: var(--accent-d); --on-primary: var(--accent-on-d);
   --tertiary: #ffb595; --error: #ffb4ab;
   --error-container: #4d0006; --on-error-container: #ffdad6;
   --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
@@ -160,6 +179,26 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch:checked { background: var(--due); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Accent swatches: 44px hit area, 26px dot. Each button carries its own
+   .accent-* class, so it paints itself from --accent-l/-d — no colour repeated. */
+.swatches { display: flex; flex-wrap: wrap; margin: -10px -10px -10px auto; }
+.swatch { width: var(--touch); height: var(--touch); border-radius: 50%; position: relative; }
+.swatch::after {
+  content: ''; position: absolute; inset: 9px; border-radius: 50%;
+  background: var(--accent-l); border: .5px solid rgba(0,0,0,.18);
+  transition: transform .16s var(--ease);
+}
+.swatch[aria-pressed="true"]::before {
+  content: ''; position: absolute; inset: 4px; border-radius: 50%;
+  border: 2px solid var(--on-surface);
+}
+.swatch:active::after { transform: scale(.86); }
+.swatch:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+html.theme-dark .swatch::after { background: var(--accent-d); border-color: rgba(255,255,255,.18); }
+@media (prefers-color-scheme: dark) {
+  html.theme-system .swatch::after { background: var(--accent-d); border-color: rgba(255,255,255,.18); }
+}
 .row input:focus, .row select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 .deck-list { list-style: none; display: flex; flex-direction: column; gap: var(--stack); }
