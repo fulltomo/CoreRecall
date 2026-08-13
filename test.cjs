@@ -177,8 +177,27 @@ const assert = require('assert');
   store.setDB({ settings: [] });
   assert.deepStrictEqual(store.db.settings, store.blank().settings, 'settings: [] replaced with defaults');
 
+  // Invalid elements within decks, cards, and log arrays are filtered out
+  const validDeck = { id: 'd1', name: 'Test' };
+  const validCard = { id: 'c1', deck: 'd1', reps: 0 };
+  const validLog = { t: Date.now(), g: 3, n: 1, c: 'c1' };
+
+  store.setDB({
+    decks: [null, undefined, 123, 'str', true, [1, 2], validDeck],
+    cards: [null, undefined, 456, 'card', false, [3, 4], validCard],
+    log: [null, undefined, 789, 'log', true, [5, 6], validLog]
+  });
+  assert.deepStrictEqual(store.db.decks, [validDeck], 'invalid deck elements filtered out');
+  assert.deepStrictEqual(store.db.cards, [validCard], 'invalid card elements filtered out');
+  assert.deepStrictEqual(store.db.log, [validLog], 'invalid log elements filtered out');
+
+  // Verify functions like todayLog() and counts() don't throw when arrays contained null elements prior to setDB
+  store.setDB({ decks: [null], cards: [null], log: [null] });
+  assert.doesNotThrow(() => store.todayLog());
+  assert.doesNotThrow(() => store.counts('d1'));
+
   // load() normalizes corrupted persisted data and saves normalized DB to localStorage
-  storage.set(store.KEY, JSON.stringify({ decks: 'corrupted', cards: null, log: {}, settings: null }));
+  storage.set(store.KEY, JSON.stringify({ decks: [null, 'corrupted'], cards: null, log: [123], settings: null }));
   store.load();
   assert.deepStrictEqual(store.db.decks, []);
   assert.deepStrictEqual(store.db.cards, []);

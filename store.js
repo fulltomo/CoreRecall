@@ -6,15 +6,17 @@ const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getM
 export const KEY = 'core-recall-v1';
 export let db = null;
 
+const isRecord = v => Boolean(v && typeof v === 'object' && !Array.isArray(v));
+
 export function normalizeDB(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isRecord(value)) {
     return blank();
   }
   const b = blank();
-  const decks = Array.isArray(value.decks) ? value.decks : b.decks;
-  const cards = Array.isArray(value.cards) ? value.cards : b.cards;
-  const log = Array.isArray(value.log) ? value.log : b.log;
-  const settings = (!value.settings || typeof value.settings !== 'object' || Array.isArray(value.settings))
+  const decks = Array.isArray(value.decks) ? value.decks.filter(isRecord) : b.decks;
+  const cards = Array.isArray(value.cards) ? value.cards.filter(isRecord) : b.cards;
+  const log = Array.isArray(value.log) ? value.log.filter(isRecord) : b.log;
+  const settings = (!value.settings || !isRecord(value.settings))
     ? b.settings
     : Object.assign(b.settings, value.settings);
   const lastBackup = typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup;
