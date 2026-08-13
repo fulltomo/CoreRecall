@@ -1,6 +1,6 @@
 /* node test.cjs — self-check for the scheduler and the CSV parser. */
 const assert = require('assert');
-const { DAY, fsrs, schedule, fmtInterval, parseCSV, retrievability } = require('./core.js');
+const { schedule, fmtInterval, parseCSV, retrievability } = require('./core.js');
 
 const NOW = Date.UTC(2026, 0, 1);
 const fresh = { reps: 0, s: 0, d: 0, last: 0 };
