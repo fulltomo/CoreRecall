@@ -18,7 +18,8 @@ let db, view = 'home', openDeck = null;
 
 function blank() {
   // lastBackup starts "now" so a fresh install isn't nagged on day one
-  return { decks: [], cards: [], log: [], lastBackup: Date.now(), settings: { new: 20, max: 200, ret: 90, theme: 'system' } };
+  return { decks: [], cards: [], log: [], lastBackup: Date.now(),
+    settings: { new: 20, max: 200, ret: 90, theme: 'light' } };
 }
 function load() {
   try { db = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { db = seed(); }
@@ -191,13 +192,21 @@ function barsHTML(rows) {
 
 /* ---------------- settings ---------------- */
 function renderSettings() {
-  $('#set-theme').value = db.settings.theme;
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
+  $('#set-theme').value = db.settings.theme;
 }
 function applyTheme() {
-  document.documentElement.className = 'theme-' + db.settings.theme;
+  // An imported backup (or an older one, naming the retired "system") can carry a
+  // theme this build doesn't have — don't leave --surface undefined. Compare the
+  // option values directly: the saved name is untrusted, and interpolating it into
+  // a selector throws on a quote, after save() has already persisted it.
+  const known = [...$('#set-theme').options].some(o => o.value === db.settings.theme);
+  if (!known) { db.settings.theme = 'light'; save(); }
+  document.documentElement.className = `theme-${db.settings.theme}`;
+  // keep the iOS status bar / PWA chrome in step with the surface colour
+  $('#meta-theme').content = getComputedStyle(document.body).backgroundColor;
 }
 
 /* ---------------- deck detail ---------------- */
@@ -427,6 +436,7 @@ $('#btn-del-deck').onclick = () => {
   save(); closeDeck();
 };
 $('#rv-flip').onclick = e => { if (!e.target.closest('button')) flip(); };  // tools stay clickable
+$('#set-theme').onchange = e => { db.settings.theme = e.target.value; save(); applyTheme(); };
 ['reverse', 'shuffle'].forEach(k => {
   $('#opt-' + k).onchange = e => { deckOf(openDeck)[k] = e.target.checked; save(); renderDeck(); };
 });
@@ -435,7 +445,6 @@ $('#btn-import-csv').onclick = () => pickFile('csv');
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
-$('#set-theme').onchange = e => { db.settings.theme = e.target.value; save(); applyTheme(); };
 ['new', 'max', 'ret'].forEach(k => {
   $('#set-' + k).onchange = e => {
     const lim = k === 'ret' ? [70, 97] : [0, 9999];

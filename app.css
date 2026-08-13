@@ -1,59 +1,70 @@
-/* Core Recall — design tokens. Light palette here, dark overrides below it.
-   Change a colour here, not in the rules. The few literals further down are
-   deliberately theme-independent: white on the rating buttons and the switch
-   knob, the modal scrim, shadows, and the toast (always dark, like iOS). */
-:root {
-  --surface: #f9f9fe;
-  --c-lowest: #ffffff;
-  --c-low: #f3f3f8;
-  --c: #ededf2;
-  --c-high: #e8e8ed;
-  --on-surface: #1a1c1f;
-  --on-variant: #414755;
-  --outline: #717786;
-  --outline-variant: #c1c6d7;
-  --primary: #0058bc;
-  --on-primary: #ffffff;
-  --tertiary: #9e3d00;
-  --error: #ba1a1a;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
+/* Core Recall — design tokens.
 
+   THEMES. One setting, one list. A theme is three values: the page colour,
+   the accent, and the text that sits on the accent. Everything else — cards,
+   dividers, body text, pressed states — is mixed from the page colour by the
+   single ramp at the bottom of this block, so light and dark are not special
+   cases, just themes whose page colour happens to be white or black.
+
+   The class goes on <html>, so a theme's colours are written exactly once.
+
+   To add a theme: add one line here, add its name to whichever polarity list
+   below matches (that is what flips text from black to white), and add an
+   <option> to #set-theme in index.html. Check the contrast: shipped themes
+   clear 7:1 body text, 4.5:1 accent and secondary text, 3:1 dividers.
+
+   The Again/Hard/Good/Easy colours and the New/Learn/Due counts live in the
+   polarity lists, not in the themes: they are status colours, and tying them
+   to the theme makes them collide (a green theme would paint "new" and "due"
+   the same). Same reasoning as iOS keeping badge colours off the accent. */
+.theme-light   { --base: #f2f2f7; --tint: #0a66d0; --on-tint: #ffffff; }  /* iOS の淡いグレー */
+.theme-paper   { --base: #f6efe1; --tint: #a1552a; --on-tint: #ffffff; }  /* 紙・セピア */
+.theme-dark    { --base: #000000; --tint: #7fb0ff; --on-tint: #00306b; }  /* OLED 向け真っ黒 */
+.theme-slate   { --base: #262b35; --tint: #88c0d0; --on-tint: #0d2a33; }  /* 青灰 + シアン */
+.theme-forest  { --base: #16241d; --tint: #7fd0a5; --on-tint: #05301f; }  /* 深緑 + ミント */
+/* No fallback here on purpose — <html> ships with theme-light. */
+
+/* Polarity: --ink is the direction everything contrasts toward, --raise is how
+   far a raised surface (a card) climbs toward white. Status colours ride along
+   because they need a light and a dark variant too. */
+.theme-light, .theme-paper {
+  --ink: #000000; --raise: 76%; --scheme: light;
+  --shadow: 0 2px 8px rgba(0,0,0,.05);
+  --tertiary: #9e3d00; --error: #ba1a1a;
+  --error-container: #ffdad6; --on-error-container: #93000a;
   --g1: #b4443c; --g2: #98661f; --g3: #1f6fb2; --g4: #5b57c4;
   --new: #0058bc; --learn: #ba1a1a; --due: #1c7a3e;
-
-  --r-sm: .25rem; --r: .5rem; --r-md: .75rem; --r-xl: 1.5rem;
-  --m-page: 16px; --gutter: 12px; --stack: 8px; --card-pad: 20px; --touch: 44px;
-  --tabbar-h: calc(52px + env(safe-area-inset-bottom));
-  --shadow: 0 2px 8px rgba(0,0,0,.05);
-  --ease: cubic-bezier(.32,.72,0,1);
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Hiragino Sans",
-          "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  html.theme-system {
-    --surface: #000000;
-    --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
-    --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-    --primary: #adc6ff; --on-primary: #002e69;
-    --tertiary: #ffb595; --error: #ffb4ab;
-    --error-container: #4d0006; --on-error-container: #ffdad6;
-    --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
-    --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
-    --shadow: none;
-    color-scheme: dark;
-  }
-}
-html.theme-dark {
-  --surface: #000000;
-  --c-lowest: #1c1c1e; --c-low: #141416; --c: #1c1c1e; --c-high: #2c2c2e;
-  --on-surface: #f0f0f5; --on-variant: #a5aab6; --outline: #8b90a0; --outline-variant: #38383a;
-  --primary: #adc6ff; --on-primary: #002e69;
+.theme-dark, .theme-slate, .theme-forest {
+  --ink: #ffffff; --raise: 11%; --scheme: dark;
+  --shadow: none;
   --tertiary: #ffb595; --error: #ffb4ab;
   --error-container: #4d0006; --on-error-container: #ffdad6;
   --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
   --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
-  --shadow: none;
+}
+
+/* The ramp — identical for every theme. */
+:root {
+  color-scheme: var(--scheme);
+  --surface:         var(--base);
+  --c-lowest:        color-mix(in srgb, #fff var(--raise), var(--base));
+  --c-low:           color-mix(in srgb, #fff calc(var(--raise) * .45), var(--base));
+  --c:               color-mix(in srgb, var(--ink)  8%, var(--base));
+  --c-high:          color-mix(in srgb, var(--ink) 13%, var(--base));
+  --outline-variant: color-mix(in srgb, var(--ink) 20%, var(--base));
+  --outline:         color-mix(in srgb, var(--ink) 48%, var(--base));
+  --on-variant:      color-mix(in srgb, var(--ink) 70%, var(--base));
+  --on-surface:      color-mix(in srgb, var(--ink) 92%, var(--base));
+  --primary: var(--tint);
+  --on-primary: var(--on-tint);
+
+  --r-sm: .25rem; --r: .5rem; --r-md: .75rem; --r-xl: 1.5rem;
+  --m-page: 16px; --gutter: 12px; --stack: 8px; --card-pad: 20px; --touch: 44px;
+  --tabbar-h: calc(52px + env(safe-area-inset-bottom));
+  --ease: cubic-bezier(.32,.72,0,1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Hiragino Sans",
+          "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -142,8 +153,11 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -.02em; }
 .row .chev { width: 18px; height: 18px; color: var(--outline); stroke-width: 2.4; margin-left: auto; }
 button.row:active, .deck-row:active { background: var(--c); }
 .row.static { cursor: default; }
+/* form controls use --outline, not the hairline: their fill is within 1.05–1.22:1
+   of the surface behind them, so the border is what identifies the control and
+   WCAG 1.4.11 applies to it (3.18–4.53:1 across the themes) */
 .row input[type=number], .row select {
-  background: var(--c-low); border: .5px solid var(--outline-variant); border-radius: var(--r);
+  background: var(--c-low); border: .5px solid var(--outline); border-radius: var(--r);
   padding: 7px 10px; min-width: 84px; text-align: right; font-variant-numeric: tabular-nums;
 }
 .row select { text-align: left; padding-right: 6px; }
@@ -160,7 +174,6 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch:checked { background: var(--due); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.row input:focus, .row select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 .deck-list { list-style: none; display: flex; flex-direction: column; gap: var(--stack); }
 .deck-row {
@@ -333,8 +346,8 @@ button.row:active, .deck-row:active { background: var(--c); }
 .sheet-body { padding: 8px var(--m-page) 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 12px; color: var(--on-variant); padding-left: 4px; }
-.field input, .field textarea, .field select {
-  background: var(--c-lowest); border: .5px solid var(--outline-variant); border-radius: var(--r-md);
+.field input, .field textarea, .field select {   /* see .row input — same reason */
+  background: var(--c-lowest); border: .5px solid var(--outline); border-radius: var(--r-md);
   padding: 12px 14px; font-size: 17px; min-height: var(--touch); resize: vertical;
 }
 .field textarea { min-height: 88px; line-height: 22px; }

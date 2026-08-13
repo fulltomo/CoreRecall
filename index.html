@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja" class="theme-system">
+<html lang="ja" class="theme-light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Core Recall</title>
-<meta name="theme-color" content="#f9f9fe" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f9f9fe" id="meta-theme"><!-- kept in sync by applyTheme() -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -92,7 +91,13 @@
 
     <h2 class="group-label">外観</h2>
     <ul class="inset-list">
-      <li><label class="row"><span>テーマ</span><select id="set-theme"><option value="system">iOS 標準</option><option value="light">ライト</option><option value="dark">ダーク</option></select></label></li>
+      <li><label class="row"><span>テーマ</span><select id="set-theme">
+        <option value="light">ライト</option>
+        <option value="paper">ペーパー</option>
+        <option value="dark">ダーク</option>
+        <option value="slate">スレート</option>
+        <option value="forest">フォレスト</option>
+      </select></label></li>
     </ul>
 
     <h2 class="group-label">学習設定</h2>
