@@ -19,7 +19,7 @@ let db, view = 'home', openDeck = null;
 function blank() {
   // lastBackup starts "now" so a fresh install isn't nagged on day one
   return { decks: [], cards: [], log: [], lastBackup: Date.now(),
-    settings: { new: 20, max: 200, ret: 90, theme: 'system', base: 'slate' } };
+    settings: { new: 20, max: 200, ret: 90, theme: 'light' } };
 }
 function load() {
   try { db = JSON.parse(localStorage.getItem(KEY)) || seed(); } catch { db = seed(); }
@@ -192,20 +192,16 @@ function barsHTML(rows) {
 
 /* ---------------- settings ---------------- */
 function renderSettings() {
-  $('#set-theme').value = db.settings.theme;
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
-  $$('#swatches .swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.base === db.settings.base));
+  $$('#swatches .swatch').forEach(b => b.setAttribute('aria-pressed', b.dataset.theme === db.settings.theme));
 }
 function applyTheme() {
-  // an imported backup can name a preset this build doesn't have — don't leave --surface undefined
-  if (!$(`[data-base="${db.settings.base}"]`)) db.settings.base = 'slate';
-  // resolve "iOS 標準" here so the CSS needs one dark block instead of one per selector
-  const mode = db.settings.theme === 'system'
-    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : db.settings.theme;
-  document.documentElement.className = `theme-${mode} base-${db.settings.base}`;
+  // an imported backup (or an older one, naming the retired "system") can carry a
+  // theme this build doesn't have — don't leave --surface undefined
+  if (!$(`[data-theme="${db.settings.theme}"]`)) { db.settings.theme = 'light'; save(); }
+  document.documentElement.className = `theme-${db.settings.theme}`;
   // keep the iOS status bar / PWA chrome in step with the surface colour
   $('#meta-theme').content = getComputedStyle(document.body).backgroundColor;
 }
@@ -421,8 +417,8 @@ document.addEventListener('click', e => {
   if (t.closest('[data-edit]')) return cardSheet(current);
   const sp = t.closest('[data-speak]'); if (sp) return speak(faces(current)[sp.dataset.speak === 'front' ? 'q' : 'a']);
   const g = t.closest('[data-g]'); if (g) return grade(+g.dataset.g);
-  const b = t.closest('[data-base]');
-  if (b) { db.settings.base = b.dataset.base; save(); applyTheme(); return renderSettings(); }
+  const th = t.closest('[data-theme]');
+  if (th) { db.settings.theme = th.dataset.theme; save(); applyTheme(); return renderSettings(); }
   if (t.closest('#banner-export') || t.closest('#btn-export')) return exportJSON();
 });
 
@@ -447,7 +443,6 @@ $('#btn-import-csv').onclick = () => pickFile('csv');
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
-$('#set-theme').onchange = e => { db.settings.theme = e.target.value; save(); applyTheme(); };
 ['new', 'max', 'ret'].forEach(k => {
   $('#set-' + k).onchange = e => {
     const lim = k === 'ret' ? [70, 97] : [0, 9999];
@@ -468,5 +463,4 @@ document.addEventListener('keydown', e => {
 
 /* ---------------- boot ---------------- */
 load(); applyTheme(); render(); renderSettings();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);  // theme:system
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

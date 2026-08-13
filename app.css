@@ -1,52 +1,68 @@
 /* Core Recall — design tokens.
 
-   BASE COLOUR PRESETS: each .base-* class is one theme in five values — the
-   page colour and the accent, for light (-l) and dark (-d), plus the text
-   colour that sits on the dark accent. Everything else (cards, dividers,
-   text, pressed states) is mixed from the page colour below, so a preset
-   never lists more than those five.
+   THEMES. One setting, one list. A theme is three values: the page colour,
+   the accent, and the text that sits on the accent. Everything else — cards,
+   dividers, body text, pressed states — is mixed from the page colour by the
+   single ramp at the bottom of this block, so light and dark are not special
+   cases, just themes whose page colour happens to be white or black.
 
-   The class goes on <html> next to theme-light / theme-dark, and on the
-   settings swatches, which read --base-l/-d from themselves — so a preset's
-   colours are written exactly once. To add one, copy a line and check the
-   contrast (all shipped presets clear 7:1 body text, 4.5:1 accent and
-   secondary text, 3:1 dividers, in both modes).
+   The class goes on <html> and on the settings swatches, which read --base
+   and --tint from themselves, so a theme's colours are written exactly once.
 
-   Literals further down are deliberately theme-independent: white on the
-   rating buttons and the switch knob, the modal scrim, shadows, and the
-   toast (always dark, like iOS). The Again/Hard/Good/Easy colours and the
-   New/Learn/Due counts are status colours and stay fixed too — tying them
-   to the theme makes them collide (green base -> "new" and "due" identical). */
-.base-slate  { --base-l: #f2f2f7; --tint-l: #0058bc; --base-d: #000000; --tint-d: #adc6ff; --on-tint-d: #002e69; }
-.base-sepia  { --base-l: #f5ecdb; --tint-l: #8a5522; --base-d: #14100a; --tint-d: #e6bd90; --on-tint-d: #432b00; }
-.base-forest { --base-l: #e9f2ea; --tint-l: #2c6144; --base-d: #0a130d; --tint-d: #9fd6b4; --on-tint-d: #0a3b23; }
-.base-ocean  { --base-l: #e6f0f4; --tint-l: #0d5f6e; --base-d: #081114; --tint-d: #92d6e2; --on-tint-d: #00363f; }
-.base-plum   { --base-l: #f3eaf3; --tint-l: #6d3d6b; --base-d: #130d13; --tint-d: #e2b3de; --on-tint-d: #3c2140; }
-/* No fallback here on purpose — <html> ships with base-slate, so the default
-   lives in one place instead of being repeated. */
+   To add a theme: add one line here, add its name to whichever polarity list
+   below matches (that is what flips text from black to white), and add one
+   <button class="swatch theme-x" data-theme="x"> in index.html. Check the
+   contrast: shipped themes clear 7:1 body text, 4.5:1 accent and secondary
+   text, 3:1 dividers.
 
-/* Light: lift toward white for raised surfaces, sink toward black for the rest. */
-:root {
-  color-scheme: light;
-  --surface:         var(--base-l);
-  --c-lowest:        color-mix(in srgb, #fff 76%, var(--base-l));
-  --c-low:           color-mix(in srgb, #fff 34%, var(--base-l));
-  --c:               color-mix(in srgb, #000  5%, var(--base-l));
-  --c-high:          color-mix(in srgb, #000  9%, var(--base-l));
-  --outline-variant: color-mix(in srgb, #000 20%, var(--base-l));
-  --outline:         color-mix(in srgb, #000 48%, var(--base-l));
-  --on-variant:      color-mix(in srgb, #000 74%, var(--base-l));
-  --on-surface:      color-mix(in srgb, #000 90%, var(--base-l));
-  --primary: var(--tint-l);
-  --on-primary: #ffffff;
-  --tertiary: #9e3d00;
-  --error: #ba1a1a;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
+   The Again/Hard/Good/Easy colours and the New/Learn/Due counts live in the
+   polarity lists, not in the themes: they are status colours, and tying them
+   to the theme makes them collide (a green theme would paint "new" and "due"
+   the same). Same reasoning as iOS keeping badge colours off the accent. */
+.theme-light    { --base: #f2f2f7; --tint: #0058bc; --on-tint: #ffffff; }
+.theme-sepia    { --base: #f5ecdb; --tint: #8a5522; --on-tint: #ffffff; }
+.theme-sage     { --base: #e9f2ea; --tint: #2c6144; --on-tint: #ffffff; }
+.theme-sky      { --base: #e6f0f4; --tint: #0d5f6e; --on-tint: #ffffff; }
+.theme-dark     { --base: #000000; --tint: #adc6ff; --on-tint: #002e69; }
+.theme-midnight { --base: #0d1220; --tint: #a8c8ff; --on-tint: #002e69; }
+.theme-forest   { --base: #0a130d; --tint: #9fd6b4; --on-tint: #0a3b23; }
+.theme-plum     { --base: #150d15; --tint: #e2b3de; --on-tint: #3c2140; }
+/* No fallback here on purpose — <html> ships with theme-light. */
+
+/* Polarity: --ink is the direction everything contrasts toward, --raise is how
+   far a raised surface (a card) climbs toward white. Status colours ride along
+   because they need a light and a dark variant too. */
+.theme-light, .theme-sepia, .theme-sage, .theme-sky {
+  --ink: #000000; --raise: 76%; --scheme: light;
   --shadow: 0 2px 8px rgba(0,0,0,.05);
-
+  --tertiary: #9e3d00; --error: #ba1a1a;
+  --error-container: #ffdad6; --on-error-container: #93000a;
   --g1: #b4443c; --g2: #98661f; --g3: #1f6fb2; --g4: #5b57c4;
   --new: #0058bc; --learn: #ba1a1a; --due: #1c7a3e;
+}
+.theme-dark, .theme-midnight, .theme-forest, .theme-plum {
+  --ink: #ffffff; --raise: 11%; --scheme: dark;
+  --shadow: none;
+  --tertiary: #ffb595; --error: #ffb4ab;
+  --error-container: #4d0006; --on-error-container: #ffdad6;
+  --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
+  --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
+}
+
+/* The ramp — identical for every theme. */
+:root {
+  color-scheme: var(--scheme);
+  --surface:         var(--base);
+  --c-lowest:        color-mix(in srgb, #fff var(--raise), var(--base));
+  --c-low:           color-mix(in srgb, #fff calc(var(--raise) * .45), var(--base));
+  --c:               color-mix(in srgb, var(--ink)  8%, var(--base));
+  --c-high:          color-mix(in srgb, var(--ink) 13%, var(--base));
+  --outline-variant: color-mix(in srgb, var(--ink) 20%, var(--base));
+  --outline:         color-mix(in srgb, var(--ink) 48%, var(--base));
+  --on-variant:      color-mix(in srgb, var(--ink) 70%, var(--base));
+  --on-surface:      color-mix(in srgb, var(--ink) 92%, var(--base));
+  --primary: var(--tint);
+  --on-primary: var(--on-tint);
 
   --r-sm: .25rem; --r: .5rem; --r-md: .75rem; --r-xl: 1.5rem;
   --m-page: 16px; --gutter: 12px; --stack: 8px; --card-pad: 20px; --touch: 44px;
@@ -54,31 +70,6 @@
   --ease: cubic-bezier(.32,.72,0,1);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Hiragino Sans",
           "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", system-ui, sans-serif;
-}
-
-/* Dark: everything lifts toward white off the page colour. applyTheme() resolves
-   "iOS 標準" to this class, so there is no second copy behind a media query. */
-html.theme-dark {
-  color-scheme: dark;
-  --surface:         var(--base-d);
-  --c-lowest:        color-mix(in srgb, #fff 11%, var(--base-d));
-  --c-low:           color-mix(in srgb, #fff  5%, var(--base-d));
-  --c:               color-mix(in srgb, #fff 11%, var(--base-d));
-  --c-high:          color-mix(in srgb, #fff 17%, var(--base-d));
-  --outline-variant: color-mix(in srgb, #fff 21%, var(--base-d));
-  --outline:         color-mix(in srgb, #fff 50%, var(--base-d));
-  --on-variant:      color-mix(in srgb, #fff 64%, var(--base-d));
-  --on-surface:      color-mix(in srgb, #fff 93%, var(--base-d));
-  --primary: var(--tint-d);
-  --on-primary: var(--on-tint-d);
-  --tertiary: #ffb595;
-  --error: #ffb4ab;
-  --error-container: #4d0006;
-  --on-error-container: #ffdad6;
-  --shadow: none;
-
-  --g1: #c9584f; --g2: #b07c2c; --g3: #2f83cb; --g4: #6f6be0;
-  --new: #adc6ff; --learn: #ff9d94; --due: #6fd08c;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -186,17 +177,19 @@ button.row:active, .deck-row:active { background: var(--c); }
 .switch:checked::after { transform: translateX(20px); }
 .switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Base swatches: 44px hit area, 26px dot showing the page colour ringed by its
-   accent. Each button carries its own .base-* class and paints itself from
-   --base-l/-d, so no preset colour is written twice. */
-/* label keeps its width; the swatches drop to their own line if they can't fit */
-.swatch-row { flex-wrap: wrap; }
-.swatch-row > span:first-of-type { flex: 0 0 auto; white-space: nowrap; }
-.swatches { display: flex; flex-wrap: wrap; margin: -10px -10px -10px auto; }
-.swatch { width: var(--touch); height: var(--touch); border-radius: 50%; position: relative; }
+/* Theme swatches: 44px hit area, 26px dot showing the theme's actual page
+   colour ringed by its accent. Each button carries its own .theme-* class and
+   paints itself from --base / --tint, so no theme colour is written twice. */
+/* label takes its own line so the swatches always get the full row width and
+   never wrap into a ragged second row */
+.swatch-row { flex-wrap: wrap; padding-bottom: 4px; }
+.swatch-row > span:first-of-type { flex: 1 0 100%; }
+.swatches { display: flex; width: 100%; margin: 0 -10px -8px; }
+.swatch { flex: 1 1 0; min-width: 38px; max-width: var(--touch); height: var(--touch);
+  border-radius: 50%; position: relative; }
 .swatch::after {
   content: ''; position: absolute; inset: 9px; border-radius: 50%;
-  background: var(--base-l); border: 2.5px solid var(--tint-l);
+  background: var(--base); border: 2.5px solid var(--tint);
   transition: transform .16s var(--ease);
 }
 .swatch[aria-pressed="true"]::before {
@@ -205,7 +198,6 @@ button.row:active, .deck-row:active { background: var(--c); }
 }
 .swatch:active::after { transform: scale(.86); }
 .swatch:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
-html.theme-dark .swatch::after { background: var(--base-d); border-color: var(--tint-d); }
 .row input:focus, .row select:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 .deck-list { list-style: none; display: flex; flex-direction: column; gap: var(--stack); }
