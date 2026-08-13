@@ -58,6 +58,55 @@ const assert = require('assert');
   assert.deepStrictEqual(parseCSV('front\tback').map(r => r.slice(0, 2)), [['front', 'back']],
     'but not when it is the only row — that is real data');
 
+  // --- contrast ratio checks for form controls and switch track (WCAG 1.4.11 >= 3:1)
+  function parseHexColor(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16)
+    ];
+  }
+  function mixColors(c1, c2, weight1Pct) {
+    const w1 = weight1Pct / 100, w2 = 1 - w1;
+    return [
+      Math.round(c1[0] * w1 + c2[0] * w2),
+      Math.round(c1[1] * w1 + c2[1] * w2),
+      Math.round(c1[2] * w1 + c2[2] * w2)
+    ];
+  }
+  function calcLuminance([r, g, b]) {
+    const [sr, sg, sb] = [r, g, b].map(v => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * sr + 0.7152 * sg + 0.0722 * sb;
+  }
+  function getContrastRatio(rgb1, rgb2) {
+    const l1 = calcLuminance(rgb1), l2 = calcLuminance(rgb2);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+
+  const whiteRGB = [255, 255, 255], blackRGB = [0, 0, 0];
+  const themeConfigs = [
+    { name: 'light', base: parseHexColor('#f2f2f7'), ink: blackRGB, raise: 76, due: parseHexColor('#1c7a3e') },
+    { name: 'paper', base: parseHexColor('#f6efe1'), ink: blackRGB, raise: 76, due: parseHexColor('#1c7a3e') },
+    { name: 'dark', base: parseHexColor('#000000'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') },
+    { name: 'slate', base: parseHexColor('#262b35'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') },
+    { name: 'forest', base: parseHexColor('#16241d'), ink: whiteRGB, raise: 11, due: parseHexColor('#6fd08c') }
+  ];
+
+  themeConfigs.forEach(t => {
+    const cLowest = mixColors(whiteRGB, t.base, t.raise);
+    const outline = mixColors(t.ink, t.base, 48);
+    const borderVsCard = getContrastRatio(outline, cLowest);
+    const dueVsCard = getContrastRatio(t.due, cLowest);
+
+    assert.ok(borderVsCard >= 3.0, `[Theme ${t.name}] switch border contrast ${borderVsCard.toFixed(2)}:1 must be >= 3.0`);
+    assert.ok(dueVsCard >= 3.0, `[Theme ${t.name}] switch ON state contrast ${dueVsCard.toFixed(2)}:1 must be >= 3.0`);
+  });
+
   console.log('all checks passed');
 })().catch(err => {
   console.error(err);
