@@ -21,6 +21,12 @@ const assert = require('assert');
   const negResetDB = normalizeDB({ settings: { resetHour: -5 } });
   assert.strictEqual(negResetDB.settings.resetHour, 0, 'resetHour < 0 must clamp to 0');
 
+  const nanResetDB = normalizeDB({ settings: { resetHour: NaN } });
+  assert.strictEqual(nanResetDB.settings.resetHour, 4, 'NaN resetHour must default to 4');
+
+  const infResetDB = normalizeDB({ settings: { resetHour: Infinity } });
+  assert.strictEqual(infResetDB.settings.resetHour, 4, 'Infinity resetHour must default to 4');
+
   const dirtyDB = {
     decks: [{ id: 'd1' }, null, 42, 'str', [], { id: 'd2' }],
     cards: [null, { id: 'c1' }, 0],

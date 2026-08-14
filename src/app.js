@@ -10,13 +10,20 @@ import { db, setDB, blank, load, save, newCard, deckOf, cardsOf, todayLog, count
 const uid =() => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t - resetHour * 3600000);
+  const d = new Date(t);
+  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 };
 const startOfDay = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t - resetHour * 3600000);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime() + resetHour * 3600000;
+  const d = new Date(t);
+  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
+  d.setHours(resetHour, 0, 0, 0);
+  return d.getTime();
+};
+const prevResetDay = (t, daysAgo) => {
+  const d = new Date(t);
+  d.setDate(d.getDate() - daysAgo);
+  return startOfDay(d.getTime(), db?.settings?.resetHour ?? 4);
 };
 
 let view = 'home', openDeck = null;
@@ -86,7 +93,7 @@ function renderHome() {
   const cells = [];
   const back = 83 + ((new Date(today).getDay() + 6) % 7); // pad so the last column ends this week
   for (let i = back; i >= 0; i--) {
-    const t = today - i * DAY, n = per[dayKey(t)] || 0;
+    const t = prevResetDay(today, i), n = per[dayKey(t)] || 0;
     const lvl = n === 0 ? 0 : Math.min(4, Math.ceil(n / max * 4));
     cells.push(`<i data-l="${lvl}" title="${dayKey(t)}: ${n}"></i>`);
   }
@@ -101,14 +108,14 @@ function renderStats() {
 
   const days = new Set(db.log.map(l => dayKey(l.t)));
   let streak = 0, cur = startOfDay(Date.now());
-  if (!days.has(dayKey(cur))) cur -= DAY;              // today not studied yet: streak still alive
-  while (days.has(dayKey(cur))) { streak++; cur -= DAY; }
+  if (!days.has(dayKey(cur))) cur = prevResetDay(cur, 1);
+  while (days.has(dayKey(cur))) { streak++; cur = prevResetDay(cur, 1); }
   $('#s-streak').textContent = streak;
 
   const wd = ['日', '月', '火', '水', '木', '金', '土'];
   const last7 = [];
   for (let i = 6; i >= 0; i--) {
-    const d = startOfDay(Date.now()) - i * DAY;
+    const d = prevResetDay(startOfDay(Date.now()), i);
     last7.push({ label: wd[new Date(d).getDay()], n: db.log.filter(l => dayKey(l.t) === dayKey(d)).length });
   }
   $('#bars').innerHTML = barsHTML(last7);
@@ -122,7 +129,7 @@ function renderStats() {
 
   const fc = [];
   for (let i = 0; i < 7; i++) {
-    const from = startOfDay(Date.now()) + i * DAY, to = from + DAY;
+    const from = prevResetDay(startOfDay(Date.now()), -i), to = prevResetDay(from, -1);
     fc.push({ label: i === 0 ? '今日' : wd[new Date(from).getDay()], n: db.cards.filter(c => c.reps && c.due < to && c.due >= (i ? from : 0)).length });
   }
   $('#forecast').innerHTML = barsHTML(fc);
@@ -257,8 +264,8 @@ function finishReview() {
 
   const days = new Set(db.log.map(l => dayKey(l.t)));
   let streak = 0, cur = startOfDay(Date.now());
-  if (!days.has(dayKey(cur))) cur -= DAY;
-  while (days.has(dayKey(cur))) { streak++; cur -= DAY; }
+  if (!days.has(dayKey(cur))) cur = prevResetDay(cur, 1);
+  while (days.has(dayKey(cur))) { streak++; cur = prevResetDay(cur, 1); }
 
   if (streak > 0) {
     $('#rv-streak-count').textContent = streak;

@@ -2,7 +2,8 @@ import { schedule, clamp } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t - resetHour * 3600000);
+  const d = new Date(t);
+  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 };
 
@@ -27,7 +28,7 @@ export function normalizeDB(value) {
     lastBackup: typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup,
     settings: Object.assign(b.settings, isRecord(value.settings) ? {
       ...value.settings,
-      resetHour: typeof value.settings.resetHour === 'number'
+      resetHour: typeof value.settings.resetHour === 'number' && Number.isFinite(value.settings.resetHour)
         ? clamp(Math.floor(value.settings.resetHour), 0, 23)
         : b.settings.resetHour
     } : {})
