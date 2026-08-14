@@ -89,7 +89,7 @@ const assert = require('assert');
 
   assert.ok(htmlContent.includes('すべてのデータを消去</span>'), 'wipe button label should be すべてのデータを消去');
   assert.ok(!htmlContent.includes('すべてのデータを消去（危険）'), 'wipe button label must not include (危険)');
-  assert.ok(htmlContent.includes('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'), 'status bar style meta must be black-translucent');
+  assert.ok(htmlContent.includes('<meta name="apple-mobile-web-app-status-bar-style" content="default">'), 'status bar style meta must be default');
   assert.ok(jsContent.includes("document.documentElement.className = `theme-${db.settings.theme}`;"), 'applyTheme must update documentElement class');
 
   const htmlBodyMatch = cssContent.match(/html,\s*body\s*\{([^}]+)\}/);
