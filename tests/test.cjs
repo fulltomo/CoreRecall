@@ -105,7 +105,7 @@ const assert = require('assert');
   assert.ok(htmlContent.includes('すべてのデータを消去</span>'), 'wipe button label should be すべてのデータを消去');
   assert.ok(!htmlContent.includes('すべてのデータを消去（危険）'), 'wipe button label must not include (危険)');
   assert.ok(htmlContent.includes('<meta name="apple-mobile-web-app-status-bar-style" content="default">'), 'status bar style meta must be default');
-  assert.ok(htmlContent.includes('id="set-reset"'), 'index.html must include #set-reset select element');
+  assert.ok(htmlContent.includes('id="set-reset-row"'), 'index.html must include #set-reset-row element');
   assert.ok(jsContent.includes("'resetHour'"), 'app.js must handle resetHour setting change');
   assert.ok(jsContent.includes("document.documentElement.className = `theme-${db.settings.theme}`;"), 'applyTheme must update documentElement class');
 

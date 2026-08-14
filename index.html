@@ -105,32 +105,7 @@
 
     <h2 class="group-label">学習設定</h2>
     <ul class="inset-list">
-      <li><label class="row"><span>日付リセット時刻</span><select id="set-reset">
-        <option value="0">0:00 (午前0時)</option>
-        <option value="1">1:00 (午前1時)</option>
-        <option value="2">2:00 (午前2時)</option>
-        <option value="3">3:00 (午前3時)</option>
-        <option value="4">4:00 (午前4時 / デフォルト)</option>
-        <option value="5">5:00 (午前5時)</option>
-        <option value="6">6:00 (午前6時)</option>
-        <option value="7">7:00 (午前7時)</option>
-        <option value="8">8:00 (午前8時)</option>
-        <option value="9">9:00 (午前9時)</option>
-        <option value="10">10:00 (午前10時)</option>
-        <option value="11">11:00 (午前11時)</option>
-        <option value="12">12:00 (正午)</option>
-        <option value="13">13:00 (午後1時)</option>
-        <option value="14">14:00 (午後2時)</option>
-        <option value="15">15:00 (午後3時)</option>
-        <option value="16">16:00 (午後4時)</option>
-        <option value="17">17:00 (午後5時)</option>
-        <option value="18">18:00 (午後6時)</option>
-        <option value="19">19:00 (午後7時)</option>
-        <option value="20">20:00 (午後8時)</option>
-        <option value="21">21:00 (午後9時)</option>
-        <option value="22">22:00 (午後10時)</option>
-        <option value="23">23:00 (午後11時)</option>
-      </select></label></li>
+      <li class="row clickable" id="set-reset-row"><span>日付リセット時刻</span><span class="muted" id="set-reset-val">4:00</span><svg class="ic chev" viewBox="0 0 24 24"><use href="#i-chevron"/></svg></li>
       <li><label class="row"><span>新規カード/日</span><input type="number" id="set-new" min="0" max="9999" inputmode="numeric"></label></li>
       <li><label class="row"><span>最大復習数/日</span><input type="number" id="set-max" min="0" max="9999" inputmode="numeric"></label></li>
       <li><label class="row"><span>目標保持率</span><input type="number" id="set-ret" min="70" max="97" inputmode="numeric"></label></li>

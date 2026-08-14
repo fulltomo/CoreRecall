@@ -159,7 +159,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -.02em; }
 }
 .row > span:first-of-type { flex: 1; }
 .row .chev { width: 18px; height: 18px; color: var(--outline); stroke-width: 2.4; margin-left: auto; }
-button.row:active, .deck-row:active { background: var(--c); }
+button.row:active, .deck-row:active, .row.clickable:active { background: var(--c); }
+.row.clickable { cursor: pointer; }
 .row.static { cursor: default; }
 /* form controls use --outline, not the hairline: their fill is within 1.05–1.22:1
    of the surface behind them, so the border is what identifies the control and
@@ -438,3 +439,75 @@ button.row:active, .deck-row:active { background: var(--c); }
 @keyframes toast { from { opacity: 0; transform: translate(-50%, 12px); } }
 
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* ---------- dial picker ---------- */
+.dial-picker {
+  width: 100%;
+  max-width: 280px;
+  height: 152px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--c-lowest, rgba(0, 0, 0, 0.03));
+  border: .5px solid var(--outline);
+  border-radius: var(--r-md, 12px);
+  user-select: none;
+  outline: none;
+}
+.dial-picker:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+.dial-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.dial-selection-bar {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 38px;
+  transform: translateY(-50%);
+  background: var(--c-container, rgba(0, 122, 255, 0.1));
+  border: 1.5px solid var(--primary, #007aff);
+  border-radius: var(--r-sm, 8px);
+  pointer-events: none;
+  z-index: 1;
+}
+.dial-wheel {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dial-wheel::-webkit-scrollbar {
+  display: none;
+}
+.dial-pad {
+  height: 57px;
+  flex-shrink: 0;
+}
+.dial-item {
+  height: 38px;
+  line-height: 38px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--on-variant, #8e8e93);
+  scroll-snap-align: center;
+  cursor: pointer;
+  transition: color 0.15s ease, font-weight 0.15s ease, opacity 0.15s ease, font-size 0.15s ease;
+  opacity: 0.4;
+}
+.dial-item.active {
+  color: var(--on-surface, #000);
+  font-weight: 700;
+  font-size: 18px;
+  opacity: 1;
+}
+
