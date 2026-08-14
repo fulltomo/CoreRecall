@@ -126,9 +126,123 @@ function barsHTML(rows) {
   return rows.map(r => `<div class="b"><b>${r.n || ''}</b><i style="height:${r.n / max * 100}%"></i><span>${r.label}</span></div>`).join('');
 }
 
+// resetHour setting handler ('resetHour')
+function showResetHourPickerModal() {
+  const currentHour = db.settings.resetHour ?? 4;
+  let tempHour = currentHour;
+
+  let itemsHTML = '<div class="dial-pad"></div>';
+  for (let loop = 0; loop < 3; loop++) {
+    for (let h = 0; h < 24; h++) {
+      itemsHTML += `<div class="dial-item" data-value="${h}">${h}:00</div>`;
+    }
+  }
+  itemsHTML += '<div class="dial-pad"></div>';
+
+  const bodyHTML = `
+    <div id="set-reset-picker" class="dial-picker" tabindex="0" role="spinbutton" aria-label="日付リセット時刻">
+      <div class="dial-viewport">
+        <div class="dial-selection-bar"></div>
+        <div class="dial-wheel" id="set-reset-wheel">
+          ${itemsHTML}
+        </div>
+      </div>
+    </div>
+  `;
+
+  openSheet('日付リセット時刻', bodyHTML, () => {
+    db.settings.resetHour = tempHour;
+    save();
+    render();
+    renderSettings();
+  }, '決定');
+
+  setTimeout(() => {
+    const wheel = $('#set-reset-wheel');
+    const picker = $('#set-reset-picker');
+    if (!wheel) return;
+
+    function setModalDialValue(hour) {
+      const items = Array.from(wheel.querySelectorAll('.dial-item'));
+      if (!items.length) return;
+      const middleIndex = 24 + hour;
+      const targetItem = items[middleIndex] || items[hour];
+      items.forEach(el => el.classList.remove('active'));
+      if (targetItem) {
+        targetItem.classList.add('active');
+        const itemTop = targetItem.offsetTop - (wheel.clientHeight / 2 - targetItem.clientHeight / 2);
+        wheel.scrollTo({ top: itemTop, behavior: 'instant' });
+      }
+    }
+
+    function updateModalDialItem() {
+      const items = Array.from(wheel.querySelectorAll('.dial-item'));
+      if (!items.length) return;
+
+      if (items.length >= 72) {
+        const singleSetHeight = items[24].offsetTop - items[0].offsetTop;
+        if (wheel.scrollTop < singleSetHeight * 0.4) {
+          wheel.scrollTop += singleSetHeight;
+        } else if (wheel.scrollTop > singleSetHeight * 1.8) {
+          wheel.scrollTop -= singleSetHeight;
+        }
+      }
+
+      const centerY = wheel.scrollTop + wheel.clientHeight / 2;
+      let closest = items[0];
+      let minDiff = Infinity;
+      items.forEach(item => {
+        const itemCenter = item.offsetTop + item.clientHeight / 2;
+        const diff = Math.abs(centerY - itemCenter);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = item;
+        }
+      });
+
+      tempHour = parseInt(closest.dataset.value, 10);
+      items.forEach(item => {
+        item.classList.toggle('active', item === closest);
+      });
+    }
+
+    setModalDialValue(currentHour);
+
+    let dialScrollTimer = null;
+    wheel.addEventListener('scroll', () => {
+      clearTimeout(dialScrollTimer);
+      dialScrollTimer = setTimeout(updateModalDialItem, 80);
+    });
+
+    wheel.addEventListener('click', e => {
+      const item = e.target.closest('.dial-item');
+      if (!item) return;
+      const targetHour = parseInt(item.dataset.value, 10);
+      setModalDialValue(targetHour);
+      tempHour = targetHour;
+    });
+
+    if (picker) {
+      picker.focus();
+      picker.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          tempHour = (tempHour + 23) % 24;
+          setModalDialValue(tempHour);
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          tempHour = (tempHour + 1) % 24;
+          setModalDialValue(tempHour);
+        }
+      });
+    }
+  }, 50);
+}
+
 /* ---------------- settings ---------------- */
 function renderSettings() {
-  $('#set-reset').value = db.settings.resetHour ?? 4;
+  const resetValEl = $('#set-reset-val');
+  if (resetValEl) resetValEl.textContent = `${db.settings.resetHour ?? 4}:00`;
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
@@ -448,14 +562,15 @@ $('#btn-import-csv').onclick = showCSVImportModal;
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
-['new', 'max', 'ret', 'reset'].forEach(k => {
+['new', 'max', 'ret'].forEach(k => {
   $('#set-' + k).onchange = e => {
-    const lim = k === 'ret' ? [70, 97] : (k === 'reset' ? [0, 23] : [0, 9999]);
-    const settingKey = k === 'reset' ? 'resetHour' : k;
-    db.settings[settingKey] = clamp(parseInt(e.target.value, 10) || 0, lim[0], lim[1]);
-    e.target.value = db.settings[settingKey]; save(); render();
+    const lim = k === 'ret' ? [70, 97] : [0, 9999];
+    db.settings[k] = clamp(parseInt(e.target.value, 10) || 0, lim[0], lim[1]);
+    e.target.value = db.settings[k]; save(); render();
   };
 });
+
+if ($('#set-reset-row')) $('#set-reset-row').onclick = showResetHourPickerModal;
 
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, textarea, select')) return;
