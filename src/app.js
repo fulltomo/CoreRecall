@@ -9,8 +9,15 @@ import { db, setDB, blank, load, save, newCard, deckOf, cardsOf, todayLog, count
 /* DAY, clamp, schedule, fmtInterval, parseCSV come from core.js */
 const uid =() => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-const startOfDay = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => {
+  const d = new Date(t - resetHour * 3600000);
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+const startOfDay = (t, resetHour = db?.settings?.resetHour ?? 4) => {
+  const d = new Date(t - resetHour * 3600000);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() + resetHour * 3600000;
+};
 
 let view = 'home', openDeck = null;
 
@@ -127,6 +134,7 @@ function barsHTML(rows) {
 
 /* ---------------- settings ---------------- */
 function renderSettings() {
+  $('#set-reset').value = db.settings.resetHour ?? 4;
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
@@ -446,11 +454,12 @@ $('#btn-import-csv').onclick = showCSVImportModal;
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
-['new', 'max', 'ret'].forEach(k => {
+['new', 'max', 'ret', 'reset'].forEach(k => {
   $('#set-' + k).onchange = e => {
-    const lim = k === 'ret' ? [70, 97] : [0, 9999];
-    db.settings[k] = clamp(parseInt(e.target.value) || 0, lim[0], lim[1]);
-    e.target.value = db.settings[k]; save();
+    const lim = k === 'ret' ? [70, 97] : (k === 'reset' ? [0, 23] : [0, 9999]);
+    const settingKey = k === 'reset' ? 'resetHour' : k;
+    db.settings[settingKey] = clamp(parseInt(e.target.value, 10) || 0, lim[0], lim[1]);
+    e.target.value = db.settings[settingKey]; save(); render();
   };
 });
 
