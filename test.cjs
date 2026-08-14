@@ -182,6 +182,9 @@ const assert = require('assert');
 
   const store = await import('./store.js');
 
+  const seeded = store.seed();
+  assert.strictEqual(seeded.decks[0].name, '英単語（サンプル）', 'seed deck name must be 英単語（サンプル）');
+
   // setDB with log: null must allow todayLog() to return [] without exception
   store.setDB({ log: null });
   assert.doesNotThrow(() => {

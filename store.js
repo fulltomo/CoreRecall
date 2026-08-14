@@ -52,7 +52,7 @@ export function newCard(deck, front, back) {
 
 export function seed() {
   const d = blank();
-  const deck = { id: uid(), name: '英単語', created: Date.now() };
+  const deck = { id: uid(), name: '英単語（サンプル）', created: Date.now() };
   d.decks.push(deck);
   [['ubiquitous', '遍在する、どこにでもある'], ['ephemeral', 'つかの間の、短命な'],
    ['meticulous', '几帳面な、細部にこだわる'], ['candid', '率直な、ありのままの'],
