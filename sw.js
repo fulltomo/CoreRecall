@@ -1,5 +1,5 @@
 /* Cache-first shell so the app works fully offline. Bump CACHE to ship an update. */
-const CACHE = 'core-recall-v10';
+const CACHE = 'core-recall-v11';
 const SHELL = ['./', 'index.html', 'src/app.css', 'src/core.js', 'src/store.js', 'src/app.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 
