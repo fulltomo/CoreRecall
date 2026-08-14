@@ -12,6 +12,21 @@ const assert = require('assert');
   assert.deepStrictEqual(blankState.decks, [], 'null DB should produce empty decks');
   assert.strictEqual(blankState.settings.theme, 'light', 'default theme should be light');
 
+  // --- resetHour default & normalization
+  assert.strictEqual(blankState.settings.resetHour, 4, 'default resetHour should be 4');
+  
+  const resetDB = normalizeDB({ settings: { resetHour: 25 } });
+  assert.strictEqual(resetDB.settings.resetHour, 23, 'resetHour > 23 must clamp to 23');
+
+  const negResetDB = normalizeDB({ settings: { resetHour: -5 } });
+  assert.strictEqual(negResetDB.settings.resetHour, 0, 'resetHour < 0 must clamp to 0');
+
+  const nanResetDB = normalizeDB({ settings: { resetHour: NaN } });
+  assert.strictEqual(nanResetDB.settings.resetHour, 4, 'NaN resetHour must default to 4');
+
+  const infResetDB = normalizeDB({ settings: { resetHour: Infinity } });
+  assert.strictEqual(infResetDB.settings.resetHour, 4, 'Infinity resetHour must default to 4');
+
   const dirtyDB = {
     decks: [{ id: 'd1' }, null, 42, 'str', [], { id: 'd2' }],
     cards: [null, { id: 'c1' }, 0],
@@ -90,6 +105,8 @@ const assert = require('assert');
   assert.ok(htmlContent.includes('すべてのデータを消去</span>'), 'wipe button label should be すべてのデータを消去');
   assert.ok(!htmlContent.includes('すべてのデータを消去（危険）'), 'wipe button label must not include (危険)');
   assert.ok(htmlContent.includes('<meta name="apple-mobile-web-app-status-bar-style" content="default">'), 'status bar style meta must be default');
+  assert.ok(htmlContent.includes('id="set-reset"'), 'index.html must include #set-reset select element');
+  assert.ok(jsContent.includes("'resetHour'"), 'app.js must handle resetHour setting change');
   assert.ok(jsContent.includes("document.documentElement.className = `theme-${db.settings.theme}`;"), 'applyTheme must update documentElement class');
 
   const htmlBodyMatch = cssContent.match(/html,\s*body\s*\{([^}]+)\}/);
@@ -191,6 +208,32 @@ const assert = require('assert');
   };
 
   const store = await import('../src/store.js');
+
+  const { dayKey, startOfDay, prevResetDay } = await import('../src/core.js');
+
+  // --- dayKey boundary & resetHour tests (0:00, 4:00, 23:00)
+  const ts4am = new Date(2026, 0, 15, 4, 0, 0).getTime();
+  const ts359am = new Date(2026, 0, 15, 3, 59, 59).getTime();
+  assert.strictEqual(dayKey(ts4am, 4), '2026-1-15', '4:00 AM belongs to current day with resetHour=4');
+  assert.strictEqual(dayKey(ts359am, 4), '2026-1-14', '3:59 AM belongs to previous day with resetHour=4');
+
+  // Reset at 0:00 (midnight)
+  const tsMidnight = new Date(2026, 0, 15, 0, 0, 0).getTime();
+  const ts1159pm = new Date(2026, 0, 14, 23, 59, 59).getTime();
+  assert.strictEqual(dayKey(tsMidnight, 0), '2026-1-15', '0:00 AM belongs to 1/15 with resetHour=0');
+  assert.strictEqual(dayKey(ts1159pm, 0), '2026-1-14', '23:59:59 PM belongs to 1/14 with resetHour=0');
+
+  // Reset at 23:00
+  const ts23pm = new Date(2026, 0, 15, 23, 0, 0).getTime();
+  const ts2259pm = new Date(2026, 0, 15, 22, 59, 59).getTime();
+  assert.strictEqual(dayKey(ts23pm, 23), '2026-1-15', '23:00 PM belongs to current day with resetHour=23');
+  assert.strictEqual(dayKey(ts2259pm, 23), '2026-1-14', '22:59 PM belongs to previous day with resetHour=23');
+
+  // startOfDay and prevResetDay consistency
+  const start4am = startOfDay(ts4am, 4);
+  assert.strictEqual(new Date(start4am).getHours(), 4, 'startOfDay sets hour to resetHour');
+  const prev1Day = prevResetDay(start4am, 1, 4);
+  assert.strictEqual(dayKey(prev1Day, 4), '2026-1-14', 'prevResetDay 1 day ago shifts date key by -1 day');
 
   const seeded = store.seed();
   assert.strictEqual(seeded.decks[0].name, '英単語（サンプル）', 'seed deck name must be 英単語（サンプル）');

@@ -1,7 +1,7 @@
-import { schedule } from './core.js';
+import { schedule, clamp, dayKey as coreDayKey } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+export const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => coreDayKey(t, resetHour);
 
 export const KEY = 'core-recall-v1';
 export let db = null;
@@ -22,7 +22,12 @@ export function normalizeDB(value) {
     cards,
     log,
     lastBackup: typeof value.lastBackup === 'number' ? value.lastBackup : b.lastBackup,
-    settings: Object.assign(b.settings, isRecord(value.settings) ? value.settings : {})
+    settings: Object.assign(b.settings, isRecord(value.settings) ? {
+      ...value.settings,
+      resetHour: typeof value.settings.resetHour === 'number' && Number.isFinite(value.settings.resetHour)
+        ? clamp(Math.floor(value.settings.resetHour), 0, 23)
+        : b.settings.resetHour
+    } : {})
   };
 }
 
@@ -32,7 +37,7 @@ export function setDB(newDB) {
 
 export function blank() {
   return { decks: [], cards: [], log: [], lastBackup: Date.now(),
-    settings: { new: 20, max: 200, ret: 90, theme: 'light' } };
+    settings: { new: 20, max: 200, ret: 90, resetHour: 4, theme: 'light' } };
 }
 
 export function load() {
@@ -64,7 +69,7 @@ export function seed() {
 
 export const deckOf = id => db.decks.find(d => d.id === id);
 export const cardsOf = id => db.cards.filter(c => c.deck === id);
-export const todayLog = () => { const k = dayKey(Date.now()); return db.log.filter(l => dayKey(l.t) === k); };
+export const todayLog = () => { const k = dayKey(Date.now(), db.settings.resetHour); return db.log.filter(l => dayKey(l.t, db.settings.resetHour) === k); };
 
 export function counts(deckId) {
   const now = Date.now(), c = { n: 0, l: 0, d: 0 };

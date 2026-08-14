@@ -3,14 +3,15 @@
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-import { DAY, clamp, fmtInterval, parseCSV } from './core.js';
+import { DAY, clamp, fmtInterval, parseCSV, dayKey as coreDayKey, startOfDay as coreStartOfDay, prevResetDay as corePrevResetDay } from './core.js';
 import { db, setDB, blank, load, save, newCard, deckOf, cardsOf, todayLog, counts, buildQueue, plan } from './store.js';
 
 /* DAY, clamp, schedule, fmtInterval, parseCSV come from core.js */
 const uid =() => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const dayKey = t => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-const startOfDay = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => coreDayKey(t, resetHour);
+const startOfDay = (t, resetHour = db?.settings?.resetHour ?? 4) => coreStartOfDay(t, resetHour);
+const prevResetDay = (t, daysAgo) => corePrevResetDay(t, daysAgo, db?.settings?.resetHour ?? 4);
 
 let view = 'home', openDeck = null;
 
@@ -79,7 +80,7 @@ function renderHome() {
   const cells = [];
   const back = 83 + ((new Date(today).getDay() + 6) % 7); // pad so the last column ends this week
   for (let i = back; i >= 0; i--) {
-    const t = today - i * DAY, n = per[dayKey(t)] || 0;
+    const t = prevResetDay(today, i), n = per[dayKey(t)] || 0;
     const lvl = n === 0 ? 0 : Math.min(4, Math.ceil(n / max * 4));
     cells.push(`<i data-l="${lvl}" title="${dayKey(t)}: ${n}"></i>`);
   }
@@ -94,14 +95,14 @@ function renderStats() {
 
   const days = new Set(db.log.map(l => dayKey(l.t)));
   let streak = 0, cur = startOfDay(Date.now());
-  if (!days.has(dayKey(cur))) cur -= DAY;              // today not studied yet: streak still alive
-  while (days.has(dayKey(cur))) { streak++; cur -= DAY; }
+  if (!days.has(dayKey(cur))) cur = prevResetDay(cur, 1);
+  while (days.has(dayKey(cur))) { streak++; cur = prevResetDay(cur, 1); }
   $('#s-streak').textContent = streak;
 
   const wd = ['日', '月', '火', '水', '木', '金', '土'];
   const last7 = [];
   for (let i = 6; i >= 0; i--) {
-    const d = startOfDay(Date.now()) - i * DAY;
+    const d = prevResetDay(startOfDay(Date.now()), i);
     last7.push({ label: wd[new Date(d).getDay()], n: db.log.filter(l => dayKey(l.t) === dayKey(d)).length });
   }
   $('#bars').innerHTML = barsHTML(last7);
@@ -115,7 +116,7 @@ function renderStats() {
 
   const fc = [];
   for (let i = 0; i < 7; i++) {
-    const from = startOfDay(Date.now()) + i * DAY, to = from + DAY;
+    const from = prevResetDay(startOfDay(Date.now()), -i), to = prevResetDay(from, -1);
     fc.push({ label: i === 0 ? '今日' : wd[new Date(from).getDay()], n: db.cards.filter(c => c.reps && c.due < to && c.due >= (i ? from : 0)).length });
   }
   $('#forecast').innerHTML = barsHTML(fc);
@@ -127,6 +128,7 @@ function barsHTML(rows) {
 
 /* ---------------- settings ---------------- */
 function renderSettings() {
+  $('#set-reset').value = db.settings.resetHour ?? 4;
   $('#set-new').value = db.settings.new;
   $('#set-max').value = db.settings.max;
   $('#set-ret').value = db.settings.ret;
@@ -249,8 +251,8 @@ function finishReview() {
 
   const days = new Set(db.log.map(l => dayKey(l.t)));
   let streak = 0, cur = startOfDay(Date.now());
-  if (!days.has(dayKey(cur))) cur -= DAY;
-  while (days.has(dayKey(cur))) { streak++; cur -= DAY; }
+  if (!days.has(dayKey(cur))) cur = prevResetDay(cur, 1);
+  while (days.has(dayKey(cur))) { streak++; cur = prevResetDay(cur, 1); }
 
   if (streak > 0) {
     $('#rv-streak-count').textContent = streak;
@@ -446,11 +448,12 @@ $('#btn-import-csv').onclick = showCSVImportModal;
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
-['new', 'max', 'ret'].forEach(k => {
+['new', 'max', 'ret', 'reset'].forEach(k => {
   $('#set-' + k).onchange = e => {
-    const lim = k === 'ret' ? [70, 97] : [0, 9999];
-    db.settings[k] = clamp(parseInt(e.target.value) || 0, lim[0], lim[1]);
-    e.target.value = db.settings[k]; save();
+    const lim = k === 'ret' ? [70, 97] : (k === 'reset' ? [0, 23] : [0, 9999]);
+    const settingKey = k === 'reset' ? 'resetHour' : k;
+    db.settings[settingKey] = clamp(parseInt(e.target.value, 10) || 0, lim[0], lim[1]);
+    e.target.value = db.settings[settingKey]; save(); render();
   };
 });
 
