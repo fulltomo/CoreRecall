@@ -3,28 +3,15 @@
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-import { DAY, clamp, fmtInterval, parseCSV } from './core.js';
+import { DAY, clamp, fmtInterval, parseCSV, dayKey as coreDayKey, startOfDay as coreStartOfDay, prevResetDay as corePrevResetDay } from './core.js';
 import { db, setDB, blank, load, save, newCard, deckOf, cardsOf, todayLog, counts, buildQueue, plan } from './store.js';
 
 /* DAY, clamp, schedule, fmtInterval, parseCSV come from core.js */
 const uid =() => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t);
-  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-};
-const startOfDay = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t);
-  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
-  d.setHours(resetHour, 0, 0, 0);
-  return d.getTime();
-};
-const prevResetDay = (t, daysAgo) => {
-  const d = new Date(t);
-  d.setDate(d.getDate() - daysAgo);
-  return startOfDay(d.getTime(), db?.settings?.resetHour ?? 4);
-};
+const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => coreDayKey(t, resetHour);
+const startOfDay = (t, resetHour = db?.settings?.resetHour ?? 4) => coreStartOfDay(t, resetHour);
+const prevResetDay = (t, daysAgo) => corePrevResetDay(t, daysAgo, db?.settings?.resetHour ?? 4);
 
 let view = 'home', openDeck = null;
 

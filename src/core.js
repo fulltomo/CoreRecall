@@ -72,13 +72,30 @@ function parseCSV(text) {
 const HEADERS = ['front', 'back', 'question', 'answer', 'term', 'definition', 'word', 'meaning', '表', '裏', '質問', '答え', '単語', '意味'];
 const isHeader = row => row.slice(0, 2).every(c => HEADERS.includes(c.trim().toLowerCase()));
 
+const dayKey = (t, resetHour = 4) => {
+  const d = new Date(t);
+  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+const startOfDay = (t, resetHour = 4) => {
+  const d = new Date(t);
+  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
+  d.setHours(resetHour, 0, 0, 0);
+  return d.getTime();
+};
+const prevResetDay = (t, daysAgo, resetHour = 4) => {
+  const d = new Date(t);
+  d.setDate(d.getDate() - daysAgo);
+  return startOfDay(d.getTime(), resetHour);
+};
+
 if (typeof globalThis !== 'undefined') {
-  Object.assign(globalThis, { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability });
+  Object.assign(globalThis, { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability, dayKey, startOfDay, prevResetDay });
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability };
+  module.exports = { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability, dayKey, startOfDay, prevResetDay };
 }
-export { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability };
+export { DAY, W, clamp, fsrs, schedule, fmtInterval, parseCSV, intervalDays, retrievability, dayKey, startOfDay, prevResetDay };
 
 
 

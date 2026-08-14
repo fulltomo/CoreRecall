@@ -1,11 +1,7 @@
-import { schedule, clamp } from './core.js';
+import { schedule, clamp, dayKey as coreDayKey } from './core.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-export const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => {
-  const d = new Date(t);
-  if (d.getHours() < resetHour) d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-};
+export const dayKey = (t, resetHour = db?.settings?.resetHour ?? 4) => coreDayKey(t, resetHour);
 
 export const KEY = 'core-recall-v1';
 export let db = null;
