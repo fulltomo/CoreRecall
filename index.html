@@ -41,7 +41,10 @@
 <main id="tab-home" class="screen" data-tab="home">
   <header class="large-title">
     <h1>デッキ</h1>
-    <button class="icon-btn accent" id="btn-add-deck" aria-label="デッキを追加"><svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg></button>
+    <button class="icon-btn accent" id="btn-add-deck" aria-label="デッキを追加" style="width: auto; padding: 0 12px; display: flex; align-items: center; gap: 4px;">
+      <svg class="ic" viewBox="0 0 24 24"><use href="#i-plus"/></svg>
+      <span style="font-size: 14px; font-weight: 600;">デッキ追加</span>
+    </button>
   </header>
   <div class="scroll">
     <div id="backup-banner"></div>
@@ -186,8 +189,12 @@
   </div>
   <div class="done-panel" id="rv-done" hidden>
     <svg class="ic done-check" viewBox="0 0 24 24"><use href="#i-check"/></svg>
-    <h3>お疲れさまでした</h3>
+    <h3>お疲れさまでした！</h3>
     <p id="rv-done-sub"></p>
+    <div id="rv-done-streak" class="streak-badge" hidden>
+      <svg class="ic" viewBox="0 0 24 24" style="color: var(--tertiary); width: 24px; height: 24px;"><use href="#i-flame"/></svg>
+      <span><strong id="rv-streak-count">0</strong>日連続達成！</span>
+    </div>
     <button class="primary-btn" data-close-review>ホームに戻る</button>
   </div>
 </section>

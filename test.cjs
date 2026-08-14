@@ -69,9 +69,9 @@ const assert = require('assert');
     'lower retention target => longer intervals');
 
   // --- interval labels
-  assert.strictEqual(fmtInterval(1 / 1440), '<1m');
-  assert.strictEqual(fmtInterval(4), '4d');
-  assert.strictEqual(fmtInterval(400), '1.1y');
+  assert.strictEqual(fmtInterval(1 / 1440), '<1分');
+  assert.strictEqual(fmtInterval(4), '4日後');
+  assert.strictEqual(fmtInterval(400), '1.1年後');
 
   // --- CSV / TSV parsing
   assert.deepStrictEqual(parseCSV('a,b\n"c,1","d""x"\n\n# note,skip\n,empty').map(r => r.slice(0, 2)),

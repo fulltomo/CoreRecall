@@ -44,11 +44,11 @@ function schedule(card, g, now, retention = 0.9) {
 }
 
 function fmtInterval(days) {
-  if (days < 1 / 24) return '<1m';
-  if (days < 1) return Math.round(days * 24) + 'h';
-  if (days < 30) return Math.round(days) + 'd';
-  if (days < 365) return (days / 30.4).toFixed(days < 90 ? 1 : 0) + 'mo';
-  return (days / 365).toFixed(1) + 'y';
+  if (days < 1 / 24) return '<1分';
+  if (days < 1) return Math.round(days * 24) + '時間後';
+  if (days < 30) return Math.round(days) + '日後';
+  if (days < 365) return (days / 30.4).toFixed(days < 90 ? 1 : 0) + 'ヶ月後';
+  return (days / 365).toFixed(1) + '年後';
 }
 
 /** Minimal RFC4180 parser; auto-detects TSV (Anki's export format). */
