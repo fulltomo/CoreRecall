@@ -5,3 +5,6 @@ node_modules/
 docs/superpowers/
 superpowers/
 .superpowers/
+
+# Playwright MCP
+.playwright-mcp/
