@@ -12,6 +12,15 @@ const assert = require('assert');
   assert.deepStrictEqual(blankState.decks, [], 'null DB should produce empty decks');
   assert.strictEqual(blankState.settings.theme, 'light', 'default theme should be light');
 
+  // --- resetHour default & normalization
+  assert.strictEqual(blankState.settings.resetHour, 4, 'default resetHour should be 4');
+  
+  const resetDB = normalizeDB({ settings: { resetHour: 25 } });
+  assert.strictEqual(resetDB.settings.resetHour, 23, 'resetHour > 23 must clamp to 23');
+
+  const negResetDB = normalizeDB({ settings: { resetHour: -5 } });
+  assert.strictEqual(negResetDB.settings.resetHour, 0, 'resetHour < 0 must clamp to 0');
+
   const dirtyDB = {
     decks: [{ id: 'd1' }, null, 42, 'str', [], { id: 'd2' }],
     cards: [null, { id: 'c1' }, 0],
@@ -191,6 +200,12 @@ const assert = require('assert');
   };
 
   const store = await import('../src/store.js');
+
+  // --- dayKey boundary test with resetHour = 4
+  const ts4am = new Date(2026, 0, 15, 4, 0, 0).getTime();
+  const ts359am = new Date(2026, 0, 15, 3, 59, 59).getTime();
+  assert.strictEqual(store.dayKey(ts4am, 4), '2026-1-15', '4:00 AM belongs to current day');
+  assert.strictEqual(store.dayKey(ts359am, 4), '2026-1-14', '3:59 AM belongs to previous day');
 
   const seeded = store.seed();
   assert.strictEqual(seeded.decks[0].name, '英単語（サンプル）', 'seed deck name must be 英単語（サンプル）');
