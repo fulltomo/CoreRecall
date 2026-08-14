@@ -186,9 +186,10 @@ button.row:active, .deck-row:active { background: var(--c); }
 .deck-row:active { transform: scale(.98); }
 .deck-row .name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .deck-row .ic:first-child { color: var(--on-variant); }
-.counts { display: flex; gap: 8px; font-size: 12px; line-height: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.counts { display: flex; gap: 8px; font-size: 11px; line-height: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .counts .n { color: var(--new); } .counts .l { color: var(--learn); } .counts .d { color: var(--due); }
 .counts .zero { color: var(--outline); font-weight: 400; }
+.count-lbl { font-size: 10px; font-weight: 500; opacity: 0.8; margin-right: 2px; }
 .deck-row .ic.done { color: var(--due); }
 
 .banner {
@@ -264,7 +265,24 @@ button.row:active, .deck-row:active { background: var(--c); }
 .dv-counts .n b { color: var(--new); } .dv-counts .l b { color: var(--learn); } .dv-counts .d b { color: var(--due); }
 .card-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .card-row .q { font-weight: 600; }
-.card-row .a { font-size: 13px; color: var(--on-variant); }
+.card-row .a {
+  font-size: 13px;
+  color: var(--on-variant);
+  filter: blur(5.5px);
+  user-select: none;
+  cursor: pointer;
+  transition: filter 0.2s, background 0.2s;
+  background: color-mix(in srgb, var(--on-variant) 12%, transparent);
+  border-radius: var(--r-sm);
+  padding: 0 6px;
+  display: inline-block;
+}
+.card-row .a.revealed {
+  filter: none;
+  background: none;
+  padding: 0;
+  user-select: auto;
+}
 .card-row .meta { font-size: 12px; color: var(--outline); }
 .card-row .q, .card-row .a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
@@ -300,8 +318,27 @@ button.row:active, .deck-row:active { background: var(--c); }
 .face.back .card-text.dim { font-size: 15px; line-height: 20px; color: var(--on-variant); font-weight: 600; }
 .face hr { width: 64px; border: 0; border-top: .5px solid var(--outline-variant); }
 .hint { text-align: center; color: var(--outline); font-size: 13px; padding-bottom: 10px; }
-.face-tools { display: flex; justify-content: space-between; border-top: .5px solid var(--outline-variant);
-  padding-top: 6px; margin: 0 -4px -6px; color: var(--on-variant); }
+.face-tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  color: var(--on-variant);
+}
+.face-tools .icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r);
+  background: var(--c-low);
+  border: .5px solid var(--outline-variant);
+  display: grid;
+  place-items: center;
+}
+.face-tools .icon-btn .ic {
+  width: 18px;
+  height: 18px;
+}
 
 .rating { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--stack);
   padding: 0 var(--m-page) calc(env(safe-area-inset-bottom) + 16px); }
@@ -322,10 +359,37 @@ button.row:active, .deck-row:active { background: var(--c); }
   flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   padding: var(--m-page) 32px calc(var(--m-page) + 40px); text-align: center; animation: fade .3s var(--ease); }
 .done-panel[hidden] { display: none; }
-.done-check { width: 56px; height: 56px; color: var(--due); stroke-width: 1.6; }
+.done-check { width: 56px; height: 56px; color: var(--due); stroke-width: 1.6; animation: pop-check 0.5s var(--ease); }
+@keyframes pop-check {
+  0% { transform: scale(0); }
+  90% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
 .done-panel h3 { font-size: 24px; line-height: 30px; }
 .done-panel p { color: var(--on-variant); }
 .done-panel .primary-btn { max-width: 280px; margin-top: 12px; }
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--tertiary) 10%, var(--c-lowest));
+  border: 1px solid var(--tertiary);
+  border-radius: var(--r-xl);
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tertiary);
+  margin: 12px 0;
+  animation: bounce-in 0.6s var(--ease);
+}
+@keyframes bounce-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.08); }
+  75% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 /* ---------- sheet ---------- */
 .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 30; animation: fadein .25s; }

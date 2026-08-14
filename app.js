@@ -63,9 +63,9 @@ function renderHome() {
         ${icon('folder')}
         <span class="name">${esc(d.name)}</span>
         ${clear && total ? `${icon('check', 'ic done')}` : `<span class="counts">
-          <span class="${c.n ? 'n' : 'zero'}">${c.n}</span>
-          <span class="${c.l ? 'l' : 'zero'}">${c.l}</span>
-          <span class="${c.d ? 'd' : 'zero'}">${c.d}</span></span>`}
+          <span class="${c.n ? 'n' : 'zero'}"><span class="count-lbl">新規</span>${c.n}</span>
+          <span class="${c.l ? 'l' : 'zero'}"><span class="count-lbl">学習中</span>${c.l}</span>
+          <span class="${c.d ? 'd' : 'zero'}"><span class="count-lbl">復習</span>${c.d}</span></span>`}
         ${icon('chevron', 'ic chev')}
       </button></li>`;
     }).join('');
@@ -246,6 +246,19 @@ function grade(g) {
 function finishReview() {
   const mins = Math.max(1, Math.round((Date.now() - sessionStart) / 60000));
   $('#rv-done-sub').textContent = `${answered}枚を復習しました（約${mins}分）`;
+
+  const days = new Set(db.log.map(l => dayKey(l.t)));
+  let streak = 0, cur = startOfDay(Date.now());
+  if (!days.has(dayKey(cur))) cur -= DAY;
+  while (days.has(dayKey(cur))) { streak++; cur -= DAY; }
+
+  if (streak > 0) {
+    $('#rv-streak-count').textContent = streak;
+    $('#rv-done-streak').hidden = false;
+  } else {
+    $('#rv-done-streak').hidden = true;
+  }
+
   $('#rv-done').hidden = false;
   $('#rating').classList.add('hidden');
 }
@@ -346,6 +359,12 @@ function go(tab) {
 /* ---------------- events ---------------- */
 document.addEventListener('click', e => {
   const t = e.target;
+  if (t.classList.contains('a') && t.closest('.card-row')) {
+    e.stopPropagation();
+    e.preventDefault();
+    t.classList.toggle('revealed');
+    return;
+  }
   const tab = t.closest('[data-goto]'); if (tab) return go(tab.dataset.goto);
   const deck = t.closest('[data-deck]'); if (deck) return openDeckView(deck.dataset.deck);
   const card = t.closest('[data-card]'); if (card) return cardSheet(db.cards.find(c => c.id === card.dataset.card));
@@ -376,7 +395,54 @@ $('#set-theme').onchange = e => { db.settings.theme = e.target.value; save(); ap
   $('#opt-' + k).onchange = e => { deckOf(openDeck)[k] = e.target.checked; save(); renderDeck(); };
 });
 $('#btn-import-json').onclick = () => pickFile('json');
-$('#btn-import-csv').onclick = () => pickFile('csv');
+function showCSVImportModal() {
+  const bodyHTML = `
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <p style="font-size: 14px; line-height: 1.5;">取り込むファイルのフォーマットが以下のように構成されていることを確認してください。</p>
+      <div style="background: var(--c-lowest); border: .5px solid var(--outline-variant); border-radius: var(--r); padding: 12px; font-size: 13px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: .5px solid var(--outline-variant); font-weight: 600; text-align: left;">
+              <th style="padding: 4px 8px;">1列目</th>
+              <th style="padding: 4px 8px;">2列目</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 6px 8px;">表面（問題）</td>
+              <td style="padding: 6px 8px;">裏面（答え）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size: 12px; color: var(--on-variant); line-height: 1.4;">
+        ※カンマ区切り（.csv）およびタブ区切り（.tsv/.txt）に対応しています。ファイル名がそのまま新規作成されるデッキの名前になります。
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <button class="primary-btn" id="btn-modal-select-file">ファイルを選択</button>
+        <button class="text-btn" id="btn-modal-sample-dl" style="color: var(--primary); min-height: auto; padding: 6px;">サンプルをダウンロード</button>
+      </div>
+    </div>
+  `;
+
+  openSheet('CSV / TSV インポート', bodyHTML, null);
+
+  $('#btn-modal-select-file').onclick = () => {
+    closeSheet();
+    pickFile('csv');
+  };
+
+  $('#btn-modal-sample-dl').onclick = () => {
+    const csvContent = "front,back\nubiquitous,遍在する、どこにでもある\nephemeral,つかの間の、短命な\n";
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "sample_deck.csv";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+}
+$('#btn-import-csv').onclick = showCSVImportModal;
 $('#btn-wipe').onclick = wipe;
 $('#file-input').onchange = e => e.target.files[0] && handleFile(e.target.files[0]);
 
