@@ -2,8 +2,8 @@
 const assert = require('assert');
 
 (async () => {
-  const { schedule, fmtInterval, parseCSV, retrievability } = await import('./core.js');
-  const { normalizeDB } = await import('./store.js');
+  const { schedule, fmtInterval, parseCSV, retrievability } = await import('../src/core.js');
+  const { normalizeDB } = await import('../src/store.js');
 
   const NOW = Date.UTC(2026, 0, 1);
 
@@ -83,9 +83,9 @@ const assert = require('assert');
 
   // --- contrast ratio checks for form controls and switch track (WCAG 1.4.11 >= 3:1)
   const fs = require('fs');
-  const cssContent = fs.readFileSync('./app.css', 'utf8');
+  const cssContent = fs.readFileSync('./src/app.css', 'utf8');
   const htmlContent = fs.readFileSync('./index.html', 'utf8');
-  const jsContent = fs.readFileSync('./app.js', 'utf8');
+  const jsContent = fs.readFileSync('./src/app.js', 'utf8');
 
   assert.ok(htmlContent.includes('すべてのデータを消去</span>'), 'wipe button label should be すべてのデータを消去');
   assert.ok(!htmlContent.includes('すべてのデータを消去（危険）'), 'wipe button label must not include (危険)');
@@ -190,7 +190,7 @@ const assert = require('assert');
     clear: () => storage.clear()
   };
 
-  const store = await import('./store.js');
+  const store = await import('../src/store.js');
 
   const seeded = store.seed();
   assert.strictEqual(seeded.decks[0].name, '英単語（サンプル）', 'seed deck name must be 英単語（サンプル）');

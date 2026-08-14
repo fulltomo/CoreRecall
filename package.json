@@ -5,11 +5,11 @@
   "description": "Anki-style interval repetition flashcard PWA",
   "type": "module",
   "scripts": {
-    "test": "node test.cjs && npm run lint",
-    "test:unit": "node test.cjs",
+    "test": "node tests/test.cjs && npm run lint",
+    "test:unit": "node tests/test.cjs",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
     "lint:js": "eslint .",
-    "lint:css": "stylelint app.css",
+    "lint:css": "stylelint src/app.css",
     "lint:html": "htmlhint index.html"
   },
   "devDependencies": {
